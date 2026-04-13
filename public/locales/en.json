@@ -134,8 +134,8 @@
   "aberration": {
     "label": "Annual Aberration",
     "kappa": "κ ≈ 20.49″ (aberration constant)",
-    "explain": "Apparent shift caused by Earth's orbital velocity (~30 km/s) vs the speed of light (v/c ≈ 1/10000).",
-    "phaseNote": "Traces an ellipse 90° out of phase with parallax, independent of star distance."
+    "explain": "Apparent shift caused by Earth's orbital velocity (~30 km/s) vs the speed of light (v/c ≈ 1/10000). Independent of star distance.",
+    "phaseNote": "In this model all stars lie in the equatorial plane, so aberration produces a 1D back-and-forth shift in RA only. In the real sky the path is elliptical (circular near the ecliptic poles), depending on the star's ecliptic latitude."
   },
   "precision": {
     "label": "Obs. Precision",

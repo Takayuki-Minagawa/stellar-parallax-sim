@@ -75,10 +75,19 @@ export const useSimStore = create<SimState>((set) => ({
   setPlaying: (playing) => set({ playing }),
   setSpeed: (speed) => set({ speed }),
 
-  setStars: (stars) => set(s => ({
-    stars,
-    selectedStarId: stars.find(st => st.id === s.selectedStarId)?.id ?? stars[0]?.id ?? '',
-  })),
+  setStars: (stars) => {
+    // 復元した custom-* id が idCounter を追い越さないようにカウンターを進める
+    stars.forEach(s => {
+      if (s.id.startsWith('custom-')) {
+        const n = parseInt(s.id.slice('custom-'.length), 10)
+        if (!isNaN(n) && n >= idCounter) idCounter = n
+      }
+    })
+    return set(s => ({
+      stars,
+      selectedStarId: stars.find(st => st.id === s.selectedStarId)?.id ?? stars[0]?.id ?? '',
+    }))
+  },
   addStar: (star) => {
     const id = `custom-${++idCounter}`
     set(s => ({ stars: [...s.stars, { ...star, id }] }))
