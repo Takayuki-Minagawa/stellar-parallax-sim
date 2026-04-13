@@ -7,13 +7,16 @@ import type { Language, Theme, ViewMode, Star } from '../types'
 /**
  * URLクエリパラメータとシミュレーション状態を双方向同期するフック
  *
- * フォーマット:
- *   ?lang=ja&theme=dark&view=overhead&stars=sirius:2.637,proxima:1.295
- *   カスタム星: custom-1000:5.0:1.571:80ff80  (id:distPc:dirRad:colorHex)
- *
- * プリセット由来の星 (addStar で custom-* id が付いていても name/nameEn が
- * プリセットと一致する場合) はプリセット id としてシリアライズする。
+ * セグメントフォーマット:
+ *   プリセット (1件目):  presetId:distPc
+ *   プリセット (2件目+): presetId~2:distPc  (tilde+連番で重複回避)
+ *   カスタム星:          id:distPc:dirRad:colorHex:jaName:enName
+ *                        ※ name/nameEn は encodeURIComponent でエンコード
  */
+
+/** ローカルカウンタ — URL 復元時に生成する一時 id の開始値 */
+const URL_ID_BASE = 50000
+
 export function useUrlSync() {
   const mounted = useRef(false)
 
@@ -45,26 +48,43 @@ export function useUrlSync() {
 
     const starsParam = params.get('stars')
     if (starsParam) {
+      let urlIdCounter = URL_ID_BASE
       const parsed: Star[] = starsParam.split(',').flatMap(seg => {
         const parts = seg.split(':')
         if (parts.length < 2) return []
-        const [id, distStr, dirStr, colorHex] = parts
+
+        const rawId   = parts[0]
+        const distStr = parts[1]
         const distancePc = parseFloat(distStr)
         if (isNaN(distancePc) || distancePc <= 0) return []
 
-        // プリセット id として登録されている場合
-        const preset = STAR_PRESETS.find(p => p.id === id)
+        // ~N サフィックスを除いてプリセットを探す (#9 対応)
+        const basePresetId = rawId.replace(/~\d+$/, '')
+        const preset = STAR_PRESETS.find(p => p.id === basePresetId)
         if (preset) {
-          return [{ ...preset, distancePc, parallaxArcsec: distanceToParallax(distancePc) }]
+          // 1件目はプリセット id をそのまま使用、2件目以降はユニークな custom-* id を割り当てる
+          const isDuplicate = rawId !== basePresetId
+          const id = isDuplicate ? `custom-${++urlIdCounter}` : basePresetId
+          return [{ ...preset, id, distancePc, parallaxArcsec: distanceToParallax(distancePc) }]
         }
 
-        // カスタム恒星 (id:distPc:dirRad:colorHex)
+        // カスタム星: id:distPc:dirRad:colorHex:jaName:enName
+        const dirStr    = parts[2]
+        const colorHex  = parts[3]
+        const jaEncoded = parts[4]
+        const enEncoded = parts[5]
+
         const directionRad = dirStr ? parseFloat(dirStr) : 1.0
         const color = colorHex ? `#${colorHex}` : '#80ff80'
+
+        // #10 対応: URL に名前が含まれていればそれを使う。なければフォールバック文字列
+        const jaName = jaEncoded ? decodeURIComponent(jaEncoded) : 'Custom Star'
+        const enName = enEncoded ? decodeURIComponent(enEncoded) : jaName
+
         return [{
-          id,
-          name: id,
-          nameEn: id,
+          id: rawId,
+          name: jaName,
+          nameEn: enName,
           distancePc,
           parallaxArcsec: distanceToParallax(distancePc),
           directionRad: isNaN(directionRad) ? 1.0 : directionRad,
@@ -86,22 +106,28 @@ export function useUrlSync() {
     params.set('theme', theme)
     params.set('view', viewMode)
 
+    // #9 対応: プリセット id の出現回数を追跡し、2件目以降に ~N サフィックスを付与
+    const presetCount = new Map<string, number>()
+
     const starsStr = stars.map(s => {
-      // id がプリセットと一致する場合 → プリセット形式
-      const presetById = STAR_PRESETS.find(p => p.id === s.id)
-      if (presetById) return `${s.id}:${s.distancePc.toFixed(3)}`
+      // プリセットかどうかを判定 (id 直接一致 or name/nameEn 一致)
+      const preset =
+        STAR_PRESETS.find(p => p.id === s.id) ??
+        STAR_PRESETS.find(p => p.name === s.name && p.nameEn === s.nameEn)
 
-      // id は custom-* だが name/nameEn がプリセットと一致する場合
-      // (addStar でプリセットを追加したケース) → プリセット id を使用
-      const presetByName = STAR_PRESETS.find(
-        p => p.name === s.name && p.nameEn === s.nameEn
-      )
-      if (presetByName) return `${presetByName.id}:${s.distancePc.toFixed(3)}`
+      if (preset) {
+        const n = (presetCount.get(preset.id) ?? 0) + 1
+        presetCount.set(preset.id, n)
+        const serialId = n === 1 ? preset.id : `${preset.id}~${n}`
+        return `${serialId}:${s.distancePc.toFixed(3)}`
+      }
 
-      // 真のカスタム恒星
-      const dirRad  = s.directionRad.toFixed(4)
+      // 真のカスタム星: id:distPc:dirRad:colorHex:jaName:enName
+      const dirRad   = s.directionRad.toFixed(4)
       const colorHex = s.color.replace('#', '')
-      return `${s.id}:${s.distancePc.toFixed(3)}:${dirRad}:${colorHex}`
+      const jaName   = encodeURIComponent(s.name)
+      const enName   = encodeURIComponent(s.nameEn)
+      return `${s.id}:${s.distancePc.toFixed(3)}:${dirRad}:${colorHex}:${jaName}:${enName}`
     }).join(',')
     params.set('stars', starsStr)
 
