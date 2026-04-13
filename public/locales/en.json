@@ -5,7 +5,8 @@
   },
   "header": {
     "theme": "Toggle Theme",
-    "language": "Language"
+    "language": "Language",
+    "share": "Copy URL to share"
   },
   "controls": {
     "title": "Controls",
@@ -46,6 +47,7 @@
     "compareMode": "Jan/Jul Comparison",
     "showTrail": "Show Trail",
     "showParallaxLine": "Show Parallax Lines",
+    "showAberration": "Show Annual Aberration",
     "resetView": "Reset View"
   },
   "view": {
@@ -128,6 +130,20 @@
     "tryAgain": "Keep practicing!",
     "questionOf": "Question {{current}} / {{total}}",
     "scoreLabel": "Score"
+  },
+  "aberration": {
+    "label": "Annual Aberration",
+    "kappa": "κ ≈ 20.49″ (aberration constant)",
+    "explain": "Apparent shift caused by Earth's orbital velocity (~30 km/s) vs the speed of light (v/c ≈ 1/10000).",
+    "phaseNote": "Traces an ellipse 90° out of phase with parallax, independent of star distance."
+  },
+  "precision": {
+    "label": "Obs. Precision",
+    "ground":    "Ground telescope (±0.01″)",
+    "hipparcos": "Hipparcos satellite (±0.001″)",
+    "gaia":      "Gaia satellite (±0.00001″)",
+    "detectable":    "Detectable",
+    "notDetectable": "Not detectable"
   },
   "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 }

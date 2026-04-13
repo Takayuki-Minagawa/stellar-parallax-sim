@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTheme } from '../../hooks/useTheme'
 import { useSimStore } from '../../store/simulationStore'
 import { useI18n } from '../../hooks/useI18n'
@@ -8,6 +9,22 @@ export default function Header() {
   const { tr } = useI18n()
   const language = useSimStore(s => s.language)
   const setLanguage = useSimStore(s => s.setLanguage)
+  const [copied, setCopied] = useState(false)
+
+  const handleShare = async () => {
+    const url = window.location.href
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: document.title, url })
+      } else {
+        await navigator.clipboard.writeText(url)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      }
+    } catch {
+      // share cancelled or clipboard unavailable
+    }
+  }
 
   return (
     <header className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
@@ -36,6 +53,15 @@ export default function Header() {
             </button>
           ))}
         </div>
+
+        {/* URL共有 */}
+        <button
+          onClick={handleShare}
+          title={tr('header.share')}
+          className="w-8 h-8 flex items-center justify-center rounded bg-gray-800 hover:bg-gray-700 border border-gray-700 text-base transition-colors"
+        >
+          {copied ? '✓' : '🔗'}
+        </button>
 
         {/* テーマ切替 */}
         <button

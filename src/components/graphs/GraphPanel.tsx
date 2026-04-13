@@ -7,6 +7,7 @@ import {
   formatParallax,
   formatDistance,
   getStarName,
+  PRECISION_LEVELS,
 } from '../../utils/astronomy'
 import { useI18n } from '../../hooks/useI18n'
 
@@ -270,6 +271,29 @@ function ParallaxCurve() {
       ctx.fillText(p.toFixed(1), pad - 4, yToCanvas(p) + 3)
     }
 
+    // 観測精度の閾値ライン
+    PRECISION_LEVELS.forEach(level => {
+      if (level.limitArcsec > maxP) return
+      const y = yToCanvas(level.limitArcsec)
+      ctx.save()
+      ctx.setLineDash([4, 4])
+      ctx.strokeStyle = level.color
+      ctx.lineWidth = 1
+      ctx.globalAlpha = 0.7
+      ctx.beginPath()
+      ctx.moveTo(pad, y)
+      ctx.lineTo(pad + pw, y)
+      ctx.stroke()
+      ctx.setLineDash([])
+      // ラベル
+      ctx.globalAlpha = 0.9
+      ctx.fillStyle = level.color
+      ctx.font = '8px monospace'
+      ctx.textAlign = 'left'
+      ctx.fillText(tr(level.key), pad + 2, y - 2)
+      ctx.restore()
+    })
+
     // 現在の恒星を点でマーク
     stars.forEach(star => {
       const d = star.distancePc
@@ -326,6 +350,10 @@ function InfoBar() {
   const earthPos = getEarthPosition(earthAngleDeg)
   const ap = getApparentDirection(star, earthPos)
 
+  // 観測精度バッジ: 最高精度で検出できるレベルを選択
+  const p = star.parallaxArcsec
+  const bestLevel = [...PRECISION_LEVELS].reverse().find(l => p >= l.limitArcsec)
+
   return (
     <div className="shrink-0 px-3 py-2 border-t border-gray-700 bg-gray-850 text-xs">
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-gray-300">
@@ -346,6 +374,20 @@ function InfoBar() {
           <span className="text-white font-mono">{ap.deltaDec.toFixed(4)}″</span>
         </span>
         <span className="text-blue-400 font-mono">{tr('view.formula')}</span>
+        {bestLevel && (
+          <span
+            className="font-medium"
+            style={{ color: bestLevel.color }}
+            title={tr(bestLevel.key)}
+          >
+            {tr('precision.label')}: {tr('precision.detectable')}
+          </span>
+        )}
+        {!bestLevel && (
+          <span className="text-gray-500">
+            {tr('precision.label')}: {tr('precision.notDetectable')}
+          </span>
+        )}
       </div>
     </div>
   )

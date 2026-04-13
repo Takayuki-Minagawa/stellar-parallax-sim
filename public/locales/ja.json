@@ -5,7 +5,8 @@
   },
   "header": {
     "theme": "テーマ切替",
-    "language": "言語"
+    "language": "言語",
+    "share": "URLをコピーして共有"
   },
   "controls": {
     "title": "操作パネル",
@@ -46,6 +47,7 @@
     "compareMode": "1月/7月比較",
     "showTrail": "残像軌跡を表示",
     "showParallaxLine": "視差補助線を表示",
+    "showAberration": "年周光行差を表示",
     "resetView": "視点リセット"
   },
   "view": {
@@ -128,6 +130,20 @@
     "tryAgain": "もう一度挑戦してみましょう。",
     "questionOf": "問題 {{current}} / {{total}}",
     "scoreLabel": "スコア"
+  },
+  "aberration": {
+    "label": "年周光行差",
+    "kappa": "κ ≈ 20.49″ (光行差定数)",
+    "explain": "地球の公転速度（約30km/s）と光速の比 (v/c ≈ 1/10000) による見かけの方向ずれです。",
+    "phaseNote": "視差と90°位相がずれた楕円を描き、距離に依存しません。"
+  },
+  "precision": {
+    "label": "観測精度",
+    "ground":    "地上望遠鏡 (±0.01″)",
+    "hipparcos": "ヒッパルコス衛星 (±0.001″)",
+    "gaia":      "ガイア衛星 (±0.00001″)",
+    "detectable":    "検出可能",
+    "notDetectable": "検出困難"
   },
   "months": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
 }

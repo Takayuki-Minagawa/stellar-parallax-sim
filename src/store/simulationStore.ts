@@ -23,6 +23,7 @@ interface SimState {
   showTrail: boolean
   showParallaxLine: boolean
   compareMode: boolean
+  showAberration: boolean
 
   // ─── UI ────────────────────────────────────────────────────────
   theme: Theme
@@ -33,6 +34,7 @@ interface SimState {
   setPlaying: (v: boolean) => void
   setSpeed: (v: number) => void
 
+  setStars: (stars: Star[]) => void
   addStar: (star: Omit<Star, 'id'>) => void
   removeStar: (id: string) => void
   updateStar: (id: string, patch: Partial<Omit<Star, 'id'>>) => void
@@ -43,6 +45,7 @@ interface SimState {
   setShowTrail: (v: boolean) => void
   setShowParallaxLine: (v: boolean) => void
   setCompareMode: (v: boolean) => void
+  setShowAberration: (v: boolean) => void
 
   setTheme: (t: Theme) => void
   setLanguage: (l: Language) => void
@@ -63,6 +66,7 @@ export const useSimStore = create<SimState>((set) => ({
   showTrail: true,
   showParallaxLine: true,
   compareMode: false,
+  showAberration: false,
 
   theme: 'dark',
   language: 'ja',
@@ -71,6 +75,10 @@ export const useSimStore = create<SimState>((set) => ({
   setPlaying: (playing) => set({ playing }),
   setSpeed: (speed) => set({ speed }),
 
+  setStars: (stars) => set(s => ({
+    stars,
+    selectedStarId: stars.find(st => st.id === s.selectedStarId)?.id ?? stars[0]?.id ?? '',
+  })),
   addStar: (star) => {
     const id = `custom-${++idCounter}`
     set(s => ({ stars: [...s.stars, { ...star, id }] }))
@@ -107,6 +115,7 @@ export const useSimStore = create<SimState>((set) => ({
   setShowTrail: (showTrail) => set({ showTrail }),
   setShowParallaxLine: (showParallaxLine) => set({ showParallaxLine }),
   setCompareMode: (compareMode) => set({ compareMode }),
+  setShowAberration: (showAberration) => set({ showAberration }),
 
   setTheme: (theme) => set({ theme }),
   setLanguage: (language) => set({ language }),

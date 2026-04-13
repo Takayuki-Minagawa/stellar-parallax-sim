@@ -19,6 +19,7 @@ export default function ControlPanel() {
     showTrail, setShowTrail,
     showParallaxLine, setShowParallaxLine,
     compareMode, setCompareMode,
+    showAberration, setShowAberration,
     language,
   } = useSimStore()
 
@@ -258,6 +259,7 @@ export default function ControlPanel() {
             <Toggle label={tr('controls.showTrail')} value={showTrail} onChange={setShowTrail} />
             <Toggle label={tr('controls.showParallaxLine')} value={showParallaxLine} onChange={setShowParallaxLine} />
             <Toggle label={tr('controls.compareMode')} value={compareMode} onChange={setCompareMode} />
+            <Toggle label={tr('controls.showAberration')} value={showAberration} onChange={setShowAberration} />
           </div>
         )}
       </div>

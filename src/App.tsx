@@ -8,6 +8,7 @@ import GraphPanel from './components/graphs/GraphPanel'
 import LearningPanel from './components/learning/LearningPanel'
 import { useSimStore } from './store/simulationStore'
 import { useTheme } from './hooks/useTheme'
+import { useUrlSync } from './hooks/useUrlSync'
 
 function ViewArea() {
   const viewMode = useSimStore(s => s.viewMode)
@@ -26,6 +27,7 @@ function ViewArea() {
 
 export default function App() {
   useTheme()
+  useUrlSync()
 
   return (
     <div className="h-screen flex flex-col bg-gray-950 text-gray-100 overflow-hidden">

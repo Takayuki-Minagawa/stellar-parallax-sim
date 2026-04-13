@@ -5,6 +5,8 @@ import {
   getEarthPosition,
   computeTrail,
   getStarName,
+  getAberration,
+  computeAberrationTrail,
 } from '../../utils/astronomy'
 import { useI18n } from '../../hooks/useI18n'
 import type { Star } from '../../types'
@@ -41,6 +43,7 @@ export default function ObserverView() {
   const stars = useSimStore(s => s.stars)
   const showTrail = useSimStore(s => s.showTrail)
   const compareMode = useSimStore(s => s.compareMode)
+  const showAberration = useSimStore(s => s.showAberration)
   const theme = useSimStore(s => s.theme)
   const language = useSimStore(s => s.language)
 
@@ -50,6 +53,12 @@ export default function ObserverView() {
   // 軌跡データ (恒星が変わったとき再計算)
   const trails = useMemo(
     () => stars.map(star => computeTrail(star, 180)),
+    [stars]
+  )
+
+  // 年周光行差軌跡 (恒星ごと; 距離非依存だが方向に依存)
+  const aberrationTrails = useMemo(
+    () => stars.map(star => computeAberrationTrail(star, 180)),
     [stars]
   )
 
@@ -112,7 +121,34 @@ export default function ObserverView() {
         const trail = trails[idx]
         const curr = getApparentDirection(star, earthPos)
 
-        // 軌跡
+        // 年周光行差の軌跡 (視差スケールで表示)
+        if (showAberration) {
+          const aberTrail = aberrationTrails[idx]
+          ctx.beginPath()
+          aberTrail.forEach((ap, i) => {
+            const px = cx + ap.deltaRA * scale
+            const py = cy - ap.deltaDec * scale
+            if (i === 0) ctx.moveTo(px, py)
+            else ctx.lineTo(px, py)
+          })
+          ctx.closePath()
+          ctx.strokeStyle = hexToRgba('#ffaa44', 0.5)
+          ctx.lineWidth = 1.5
+          ctx.setLineDash([4, 4])
+          ctx.stroke()
+          ctx.setLineDash([])
+
+          // 光行差の現在位置
+          const aberCurr = getAberration(star, earthAngleDeg)
+          const abx = cx + aberCurr.deltaRA * scale
+          const aby = cy - aberCurr.deltaDec * scale
+          ctx.beginPath()
+          ctx.arc(abx, aby, 5, 0, Math.PI * 2)
+          ctx.fillStyle = 'rgba(255,170,68,0.8)'
+          ctx.fill()
+        }
+
+        // 視差軌跡
         if (showTrail && trail.length > 1) {
           ctx.beginPath()
           trail.forEach((ap, i) => {
@@ -171,7 +207,7 @@ export default function ObserverView() {
     frameId = requestAnimationFrame(draw)
     animRef.current = frameId
     return () => cancelAnimationFrame(frameId)
-  }, [earthAngleDeg, stars, trails, showTrail, compareMode, theme, janLabel, julLabel, language, tr])
+  }, [earthAngleDeg, stars, trails, aberrationTrails, showTrail, showAberration, compareMode, theme, janLabel, julLabel, language, tr])
 
   // リサイズ
   useEffect(() => {

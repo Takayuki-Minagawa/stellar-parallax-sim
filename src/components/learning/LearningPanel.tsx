@@ -1,7 +1,14 @@
 import { useState, useMemo } from 'react'
 import { useSimStore } from '../../store/simulationStore'
 import { useI18n } from '../../hooks/useI18n'
-import { distanceToParallax, formatParallax, formatDistance, getStarName } from '../../utils/astronomy'
+import {
+  distanceToParallax,
+  formatParallax,
+  formatDistance,
+  getStarName,
+  PRECISION_LEVELS,
+  ABERRATION_KAPPA,
+} from '../../utils/astronomy'
 import type { QuizQuestion } from '../../types'
 
 // ─── クイズ生成 ────────────────────────────────────────────────────────────────
@@ -150,6 +157,33 @@ function ExplainView() {
         <div className="font-semibold text-indigo-300">{tr('learning.parsecTitle')}</div>
         <div>{tr('learning.parsecDef')}</div>
         <div className="font-mono text-blue-400 mt-1">{tr('learning.parallaxFormula')}</div>
+      </div>
+
+      {/* 年周光行差 */}
+      <div className="rounded-lg bg-amber-950 border border-amber-800 p-3 text-xs text-amber-100 space-y-1.5">
+        <div className="font-semibold text-amber-300">{tr('aberration.label')}</div>
+        <div className="font-mono text-amber-400">{tr('aberration.kappa')}</div>
+        <div>{tr('aberration.explain')}</div>
+        <div className="text-amber-300/70 text-[10px]">{tr('aberration.phaseNote')}</div>
+        <div className="font-mono text-[10px] text-amber-400">
+          ΔRA = κ × cos(θ − φ) &nbsp; κ ≈ {ABERRATION_KAPPA.toFixed(2)}″
+        </div>
+      </div>
+
+      {/* 観測精度 */}
+      <div className="rounded-lg bg-gray-800 border border-gray-700 p-3 text-xs space-y-1.5">
+        <div className="font-semibold text-gray-300">{tr('precision.label')}</div>
+        {PRECISION_LEVELS.map(level => {
+          const detectable = (star?.parallaxArcsec ?? 0) >= level.limitArcsec
+          return (
+            <div key={level.key} className="flex items-center justify-between">
+              <span style={{ color: level.color }}>{tr(level.key)}</span>
+              <span className={detectable ? 'text-green-400' : 'text-gray-600'}>
+                {detectable ? tr('precision.detectable') : tr('precision.notDetectable')}
+              </span>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

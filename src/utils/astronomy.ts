@@ -150,3 +150,48 @@ export function formatParallax(arcsec: number): string {
   if (arcsec >= 0.01) return `${arcsec.toFixed(4)}″`
   return `${(arcsec * 1000).toFixed(2)} mas`
 }
+
+// ─── 年周光行差 ───────────────────────────────────────────────────────────────
+
+/** 光行差定数 κ [arcsec] */
+export const ABERRATION_KAPPA = 20.4898
+
+/**
+ * 年周光行差による見かけ方向ずれを計算
+ * - κ ≈ 20.49″ (光行差定数, 地球公転速度 ÷ 光速)
+ * - RA 方向: κ × cos(θ_earth - φ_star)  (距離に依存しない)
+ * - Dec 方向: 0 (赤道面モデルでは Y 成分=0)
+ * - 視差と 90° 位相がずれた楕円を描く
+ */
+export function getAberration(star: Star, earthAngleDeg: number): ApparentDirection {
+  const θ = (earthAngleDeg * Math.PI) / 180
+  const φ = star.directionRad
+  return {
+    deltaRA: ABERRATION_KAPPA * Math.cos(θ - φ),
+    deltaDec: 0,
+  }
+}
+
+/** 年周光行差の軌跡 (steps 点) */
+export function computeAberrationTrail(star: Star, steps = 180): ApparentDirection[] {
+  return Array.from({ length: steps + 1 }, (_, i) => {
+    const angleDeg = (i / steps) * 360
+    return getAberration(star, angleDeg)
+  })
+}
+
+// ─── 観測精度レベル ────────────────────────────────────────────────────────────
+
+export interface PrecisionLevel {
+  /** ロケールキー (precision.ground など) */
+  key: string
+  /** 検出限界視差角 [arcsec] */
+  limitArcsec: number
+  color: string
+}
+
+export const PRECISION_LEVELS: PrecisionLevel[] = [
+  { key: 'precision.ground',     limitArcsec: 0.01,    color: '#44bb88' },
+  { key: 'precision.hipparcos',  limitArcsec: 0.001,   color: '#88aaff' },
+  { key: 'precision.gaia',       limitArcsec: 0.00001, color: '#ffaa44' },
+]
