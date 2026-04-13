@@ -1,0 +1,108 @@
+{
+  "app": {
+    "title": "Stellar Parallax Simulator",
+    "subtitle": "Earth's Orbit & Apparent Star Motion"
+  },
+  "header": {
+    "theme": "Toggle Theme",
+    "language": "Language"
+  },
+  "controls": {
+    "title": "Controls",
+    "playback": "Playback",
+    "play": "Play",
+    "pause": "Pause",
+    "speed": "Speed",
+    "speedUnit": "×",
+    "month": "Month",
+    "monthLabel": "Orbital Position (Month)",
+    "star": "Star Settings",
+    "preset": "Preset",
+    "custom": "Custom",
+    "distance": "Distance",
+    "distancePc": "Parsec (pc)",
+    "distanceLy": "Light-year (ly)",
+    "distanceAu": "Astronomical Unit (au)",
+    "distanceUnit": "Distance Unit",
+    "addStar": "Add Star",
+    "removeStar": "Remove",
+    "starColor": "Color",
+    "viewMode": "View Mode",
+    "overhead": "Overhead View",
+    "observer": "Observer View",
+    "stellar": "Stellar View",
+    "compareMode": "Jan/Jul Comparison",
+    "showTrail": "Show Trail",
+    "showParallaxLine": "Show Parallax Lines",
+    "resetView": "Reset View"
+  },
+  "view": {
+    "sun": "Sun",
+    "earth": "Earth",
+    "parallaxAngle": "Parallax Angle",
+    "distance": "Distance",
+    "formula": "d [pc] = 1 / p [″]",
+    "jan": "Jan",
+    "jul": "Jul",
+    "backgroundStars": "Background Stars (distant)",
+    "nearStar": "Near Star"
+  },
+  "graph": {
+    "title": "Graphs",
+    "positionPlot": "Apparent Position",
+    "parallaxCurve": "Parallax vs Distance",
+    "xAxis": "RA offset [″]",
+    "yAxis": "Dec offset [″]",
+    "parallaxX": "Distance [pc]",
+    "parallaxY": "Parallax [″]",
+    "currentPoint": "Current Star",
+    "month": "Month"
+  },
+  "info": {
+    "parallaxAngle": "Parallax Angle",
+    "distance": "Distance",
+    "formula": "d = 1/p",
+    "arcsec": "arcsec",
+    "mas": "mas"
+  },
+  "learning": {
+    "title": "Learning Panel",
+    "stateNear": "Closer stars have a larger parallax angle and appear to shift more.",
+    "stateFar": "Distant stars have a parallax angle too small to detect any movement.",
+    "stateOverhead": "In the overhead view, you can see how the line of sight to a nearby star shifts as Earth orbits the Sun.",
+    "stateObserver": "In observer view, nearby stars appear to shift periodically against the background of distant stars.",
+    "hint1": "Move the distance slider to explore the relationship between distance and parallax angle.",
+    "hint2": "Press play to watch the star's position change over one year.",
+    "hint3": "Use 'Jan/Jul Comparison' mode to see the maximum shift over half a year.",
+    "parsecDef": "1 parsec (pc) = the distance at which parallax angle equals 1 arcsecond. ≈ 3.26 light-years.",
+    "parallaxFormula": "Relationship between parallax p [arcsec] and distance d [pc]: d = 1/p",
+    "quizTitle": "Knowledge Check"
+  },
+  "quiz": {
+    "dist-from-parallax": {
+      "question": "What is the distance of a star with a parallax angle of {{p}} arcseconds?",
+      "explanation": "Using d = 1/p: d = 1/{{p}} = {{d}} pc."
+    },
+    "which-is-closer": {
+      "question": "Star A has parallax {{p1}}″ and Star B has parallax {{p2}}″. Which is closer?",
+      "choiceA": "Star A ({{p1}}″)",
+      "choiceB": "Star B ({{p2}}″)",
+      "explanation": "A larger parallax means a closer star. {{closer}} is closer, at {{d}} pc."
+    },
+    "parsec-def": {
+      "question": "Which correctly defines 1 parsec?",
+      "choices": [
+        "Distance at which parallax = 1 arcsecond (≈ 3.26 ly)",
+        "Distance light travels in one year (1 light-year)",
+        "Mean Earth-Sun distance (1 AU)",
+        "Distance at which parallax = 1 degree"
+      ],
+      "explanation": "One parsec is the distance at which annual parallax equals 1 arcsecond, equivalent to about 3.26 light-years (≈ 206,265 AU)."
+    },
+    "correct": "Correct!",
+    "incorrect": "Incorrect.",
+    "next": "Next Question",
+    "retry": "Try Again"
+  },
+  "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+}
