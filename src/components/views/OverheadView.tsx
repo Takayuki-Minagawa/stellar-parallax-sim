@@ -3,9 +3,9 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Stars, Line, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { useSimStore } from '../../store/simulationStore'
-import { getEarthPosition, computeTrail } from '../../utils/astronomy'
+import { getEarthPosition, computeTrail, getStarName } from '../../utils/astronomy'
 import { useI18n } from '../../hooks/useI18n'
-import type { Star } from '../../types'
+import type { Star, Language } from '../../types'
 
 // ─── 定数 ─────────────────────────────────────────────────────────────────────
 const SCALE = 4          // 1 au → 4 scene units
@@ -89,13 +89,13 @@ function ParallaxLines({ star }: { star: Star }) {
 }
 
 // ─── ラベル ────────────────────────────────────────────────────────────────────
-function StarLabel({ star, tr }: { star: Star; tr: (k: string) => string }) {
+function StarLabel({ star, tr, language }: { star: Star; tr: (k: string) => string; language: Language }) {
   const sx = Math.cos(star.directionRad) * star.distancePc * STAR_SCALE * 100
   const sz = Math.sin(star.directionRad) * star.distancePc * STAR_SCALE * 100
   return (
     <Html position={[sx + 0.3, 0.3, sz]} style={{ pointerEvents: 'none' }}>
       <span style={{ color: star.color, fontSize: '11px', whiteSpace: 'nowrap', textShadow: '0 0 4px #000' }}>
-        {star.name || tr('view.nearStar')}
+        {getStarName(star, language) || tr('view.nearStar')}
       </span>
     </Html>
   )
@@ -109,6 +109,7 @@ function Scene() {
   const speed = useSimStore(s => s.speed)
   const setEarthAngle = useSimStore(s => s.setEarthAngle)
   const earthAngleDeg = useSimStore(s => s.earthAngleDeg)
+  const language = useSimStore(s => s.language)
 
   useFrame((_, delta) => {
     if (!playing) return
@@ -143,7 +144,7 @@ function Scene() {
           <NearStar star={star} />
           <ParallaxTrail star={star} />
           <ParallaxLines star={star} />
-          <StarLabel star={star} tr={tr} />
+          <StarLabel star={star} tr={tr} language={language} />
         </group>
       ))}
 

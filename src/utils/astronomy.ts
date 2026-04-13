@@ -1,4 +1,9 @@
-import type { Star, EarthPosition, ApparentDirection, ParallaxResult } from '../types'
+import type { Star, EarthPosition, ApparentDirection, ParallaxResult, Language } from '../types'
+
+/** 言語に応じた恒星名を返す */
+export function getStarName(star: Star, lang: Language): string {
+  return lang === 'en' ? star.nameEn : star.name
+}
 
 /** 天文単位 [pc] */
 export const AU_IN_PC = 1 / 206265

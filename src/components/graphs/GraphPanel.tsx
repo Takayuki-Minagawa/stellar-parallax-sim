@@ -6,6 +6,7 @@ import {
   distanceToParallax,
   formatParallax,
   formatDistance,
+  getStarName,
 } from '../../utils/astronomy'
 import { useI18n } from '../../hooks/useI18n'
 
@@ -182,6 +183,7 @@ function ParallaxCurve() {
   const { tr } = useI18n()
   const stars = useSimStore(s => s.stars)
   const distanceUnit = useSimStore(s => s.distanceUnit)
+  const language = useSimStore(s => s.language)
   const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 })
 
   useEffect(() => {
@@ -287,11 +289,11 @@ function ParallaxCurve() {
       ctx.fillStyle = star.color
       ctx.font = '10px sans-serif'
       ctx.textAlign = 'left'
-      ctx.fillText(star.name, x + 8, y - 4)
+      ctx.fillText(getStarName(star, language), x + 8, y - 4)
     })
 
     ctx.restore()
-  }, [stars, distanceUnit, tr, canvasSize])
+  }, [stars, distanceUnit, tr, canvasSize, language])
 
   useEffect(() => {
     const canvas = canvasRef.current

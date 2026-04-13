@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useSimStore } from '../../store/simulationStore'
 import { useI18n } from '../../hooks/useI18n'
 import { STAR_PRESETS, DEFAULT_CUSTOM_STAR } from '../../data/starPresets'
-import { formatDistance, formatParallax } from '../../utils/astronomy'
+import { formatDistance, formatParallax, getStarName } from '../../utils/astronomy'
 import type { ViewMode, DistanceUnit } from '../../types'
 
 const SPEED_OPTIONS = [0.25, 0.5, 1, 2, 5, 10, 30, 60]
@@ -19,6 +19,7 @@ export default function ControlPanel() {
     showTrail, setShowTrail,
     showParallaxLine, setShowParallaxLine,
     compareMode, setCompareMode,
+    language,
   } = useSimStore()
 
   const [activeTab, setActiveTab] = useState<'playback' | 'star' | 'display'>('playback')
@@ -155,7 +156,7 @@ export default function ControlPanel() {
                         className="w-3 h-3 rounded-full flex-shrink-0"
                         style={{ background: star.color }}
                       />
-                      <span className="font-medium text-xs truncate max-w-[120px]">{star.name}</span>
+                      <span className="font-medium text-xs truncate max-w-[120px]">{getStarName(star, language)}</span>
                     </span>
                     {stars.length > 1 && (
                       <button
@@ -185,7 +186,7 @@ export default function ControlPanel() {
               >
                 <option value="" disabled>{tr('controls.addPlaceholder')}</option>
                 {STAR_PRESETS.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
+                  <option key={p.id} value={p.id}>{getStarName(p, language)}</option>
                 ))}
               </select>
             </div>
@@ -193,7 +194,7 @@ export default function ControlPanel() {
             {/* 選択中の恒星を編集 */}
             {selectedStar && (
               <div className="space-y-3 border-t border-gray-700 pt-3">
-                <div className="text-xs text-gray-400 font-medium">{tr('controls.selectedStar')}: {selectedStar.name}</div>
+                <div className="text-xs text-gray-400 font-medium">{tr('controls.selectedStar')}: {getStarName(selectedStar, language)}</div>
 
                 {/* 距離スライダー */}
                 <div>

@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from 'react'
 import { useSimStore } from '../../store/simulationStore'
-import { getEarthPosition } from '../../utils/astronomy'
+import { getEarthPosition, getStarName } from '../../utils/astronomy'
 import { useI18n } from '../../hooks/useI18n'
 
 /**
@@ -15,6 +15,7 @@ export default function StellarView() {
   const selectedStarId = useSimStore(s => s.selectedStarId)
   const earthAngleDeg = useSimStore(s => s.earthAngleDeg)
   const theme = useSimStore(s => s.theme)
+  const language = useSimStore(s => s.language)
   const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 })
 
   const star = stars.find(s => s.id === selectedStarId) ?? stars[0]
@@ -124,10 +125,10 @@ export default function StellarView() {
     ctx.fillStyle = isDark ? '#445566' : '#6688aa'
     ctx.font = '11px sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText(tr('view.lookingFromStar', { name: star.name }), cx, 20)
+    ctx.fillText(tr('view.lookingFromStar', { name: getStarName(star, language) }), cx, 20)
 
     ctx.restore()
-  }, [star, earthAngleDeg, theme, tr, canvasSize])
+  }, [star, earthAngleDeg, theme, tr, canvasSize, language])
 
   useEffect(() => {
     const canvas = canvasRef.current

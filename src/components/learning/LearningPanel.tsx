@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useSimStore } from '../../store/simulationStore'
 import { useI18n } from '../../hooks/useI18n'
-import { distanceToParallax, formatParallax, formatDistance } from '../../utils/astronomy'
+import { distanceToParallax, formatParallax, formatDistance, getStarName } from '../../utils/astronomy'
 import type { QuizQuestion } from '../../types'
 
 // ─── クイズ生成 ────────────────────────────────────────────────────────────────
@@ -91,6 +91,7 @@ function ExplainView() {
   const viewMode = useSimStore(s => s.viewMode)
   const selectedStarId = useSimStore(s => s.selectedStarId)
   const distanceUnit = useSimStore(s => s.distanceUnit)
+  const language = useSimStore(s => s.language)
 
   const star = stars.find(s => s.id === selectedStarId) ?? stars[0]
 
@@ -115,7 +116,7 @@ function ExplainView() {
         <div className="rounded-lg bg-gray-800 border border-gray-700 p-3 space-y-1.5">
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full" style={{ background: star.color }} />
-            <span className="font-semibold text-sm">{star.name}</span>
+            <span className="font-semibold text-sm">{getStarName(star, language)}</span>
           </div>
           <div className="text-xs text-gray-400 space-y-0.5">
             <div>

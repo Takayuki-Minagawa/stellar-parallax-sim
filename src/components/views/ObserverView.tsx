@@ -4,6 +4,7 @@ import {
   getApparentDirection,
   getEarthPosition,
   computeTrail,
+  getStarName,
 } from '../../utils/astronomy'
 import { useI18n } from '../../hooks/useI18n'
 import type { Star } from '../../types'
@@ -41,6 +42,7 @@ export default function ObserverView() {
   const showTrail = useSimStore(s => s.showTrail)
   const compareMode = useSimStore(s => s.compareMode)
   const theme = useSimStore(s => s.theme)
+  const language = useSimStore(s => s.language)
 
   const janLabel = tr('view.jan')
   const julLabel = tr('view.jul')
@@ -152,7 +154,7 @@ export default function ObserverView() {
         // 名前ラベル
         ctx.fillStyle = star.color
         ctx.font = `11px sans-serif`
-        ctx.fillText(star.name || 'Star', px + 11, py + 4)
+        ctx.fillText(getStarName(star, language) || tr('view.nearStar'), px + 11, py + 4)
       })
 
       // ─── 中心（基準方向） ──────────────────────────────────────
@@ -169,7 +171,7 @@ export default function ObserverView() {
     frameId = requestAnimationFrame(draw)
     animRef.current = frameId
     return () => cancelAnimationFrame(frameId)
-  }, [earthAngleDeg, stars, trails, showTrail, compareMode, theme, janLabel, julLabel])
+  }, [earthAngleDeg, stars, trails, showTrail, compareMode, theme, janLabel, julLabel, language, tr])
 
   // リサイズ
   useEffect(() => {
