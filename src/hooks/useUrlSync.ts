@@ -14,9 +14,6 @@ import type { Language, Theme, ViewMode, Star } from '../types'
  *                        ※ name/nameEn は encodeURIComponent でエンコード
  */
 
-/** ローカルカウンタ — URL 復元時に生成する一時 id の開始値 */
-const URL_ID_BASE = 50000
-
 export function useUrlSync() {
   const mounted = useRef(false)
 
@@ -48,8 +45,21 @@ export function useUrlSync() {
 
     const starsParam = params.get('stars')
     if (starsParam) {
-      let urlIdCounter = URL_ID_BASE
-      const parsed: Star[] = starsParam.split(',').flatMap(seg => {
+      // パス1: URL 内の custom-N id をすべて走査して最大値を取得。
+      // duplicate preset 用の新 id はこの値より大きい番号から振り始める。
+      const segments = starsParam.split(',')
+      let maxCustomNum = 1000  // store の idCounter 初期値と同じ下限
+      segments.forEach(seg => {
+        const rawId = seg.split(':')[0]
+        if (rawId.startsWith('custom-')) {
+          const n = parseInt(rawId.slice('custom-'.length), 10)
+          if (!isNaN(n) && n > maxCustomNum) maxCustomNum = n
+        }
+      })
+      let urlIdCounter = maxCustomNum  // ++urlIdCounter で使用するため max の値を保持
+
+      // パス2: 実解析
+      const parsed: Star[] = segments.flatMap(seg => {
         const parts = seg.split(':')
         if (parts.length < 2) return []
 
