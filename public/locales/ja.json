@@ -9,6 +9,9 @@
   },
   "controls": {
     "title": "操作パネル",
+    "tabPlayback": "再生",
+    "tabStar": "恒星",
+    "tabDisplay": "表示",
     "playback": "再生コントロール",
     "play": "再生",
     "pause": "一時停止",
@@ -16,18 +19,27 @@
     "speedUnit": "×",
     "month": "月",
     "monthLabel": "公転位置（月）",
+    "sliderMonthMarkers": ["1月", "4月", "7月", "10月", "12月"],
     "star": "恒星設定",
     "preset": "プリセット",
+    "addPlaceholder": "追加...",
     "custom": "カスタム",
     "distance": "距離",
     "distancePc": "パーセク (pc)",
     "distanceLy": "光年 (ly)",
     "distanceAu": "天文単位 (au)",
     "distanceUnit": "距離単位",
+    "distanceLabel": "距離",
+    "distanceSliderMin": "1 pc",
+    "distanceSliderMax": "200 pc",
+    "selectedStar": "選択中",
     "addStar": "恒星を追加",
     "removeStar": "削除",
     "starColor": "色",
     "viewMode": "視点モード",
+    "viewOverhead": "俯瞰",
+    "viewObserver": "地球視点",
+    "viewStellar": "恒星視点",
     "overhead": "俯瞰視点",
     "observer": "地球視点",
     "stellar": "恒星視点",
@@ -45,7 +57,8 @@
     "jan": "1月",
     "jul": "7月",
     "backgroundStars": "背景恒星（遠い）",
-    "nearStar": "近い恒星"
+    "nearStar": "近い恒星",
+    "lookingFromStar": "{{name}} から見た太陽系"
   },
   "graph": {
     "title": "グラフ",
@@ -67,6 +80,9 @@
   },
   "learning": {
     "title": "学習パネル",
+    "distanceLabel": "距離",
+    "parallaxLabel": "視差角",
+    "parsecTitle": "パーセクの定義",
     "stateNear": "近い恒星ほど視差角が大きく、揺れ幅が大きくなります。",
     "stateFar": "遠い恒星は視差角が小さすぎて、ほとんど動かないように見えます。",
     "stateOverhead": "俯瞰視点では、地球が公転するにつれて近い恒星への視線方向がずれる様子が分かります。",
@@ -87,6 +103,8 @@
       "question": "視差角が {{p1}} 秒角の星Aと {{p2}} 秒角の星B、どちらが近いですか？",
       "choiceA": "星A（{{p1}}″）",
       "choiceB": "星B（{{p2}}″）",
+      "closerA": "星A",
+      "closerB": "星B",
       "explanation": "視差角が大きいほど近い恒星です。{{closer}} のほうが近く、距離は {{d}} pc です。"
     },
     "parsec-def": {
@@ -102,7 +120,14 @@
     "correct": "正解！",
     "incorrect": "不正解。",
     "next": "次の問題",
-    "retry": "もう一度"
+    "retry": "もう一度",
+    "seeResults": "結果を見る",
+    "scoreResult": "{{score}} / {{total}} 問正解",
+    "allCorrect": "全問正解！素晴らしい！",
+    "goodJob": "よくできました！",
+    "tryAgain": "もう一度挑戦してみましょう。",
+    "questionOf": "問題 {{current}} / {{total}}",
+    "scoreLabel": "スコア"
   },
   "months": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
 }

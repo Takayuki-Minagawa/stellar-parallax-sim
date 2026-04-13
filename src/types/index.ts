@@ -64,7 +64,10 @@ export type QuizType = 'dist-from-parallax' | 'which-is-closer' | 'parsec-def'
 export interface QuizQuestion {
   type: QuizType
   questionKey: string
+  /** ロケールキー（要 tr() 解決）または表示文字列の配列 */
   choices: string[]
+  /** choices の代わりに使う trArr キー（parsec-def など配列ロケールがある場合） */
+  choicesKey?: string
   correctIndex: number
   explanationKey: string
   params?: Record<string, number | string>

@@ -9,6 +9,9 @@
   },
   "controls": {
     "title": "Controls",
+    "tabPlayback": "Playback",
+    "tabStar": "Stars",
+    "tabDisplay": "Display",
     "playback": "Playback",
     "play": "Play",
     "pause": "Pause",
@@ -16,18 +19,27 @@
     "speedUnit": "×",
     "month": "Month",
     "monthLabel": "Orbital Position (Month)",
+    "sliderMonthMarkers": ["Jan", "Apr", "Jul", "Oct", "Dec"],
     "star": "Star Settings",
     "preset": "Preset",
+    "addPlaceholder": "Add...",
     "custom": "Custom",
     "distance": "Distance",
     "distancePc": "Parsec (pc)",
     "distanceLy": "Light-year (ly)",
     "distanceAu": "Astronomical Unit (au)",
     "distanceUnit": "Distance Unit",
+    "distanceLabel": "Distance",
+    "distanceSliderMin": "1 pc",
+    "distanceSliderMax": "200 pc",
+    "selectedStar": "Selected",
     "addStar": "Add Star",
     "removeStar": "Remove",
     "starColor": "Color",
     "viewMode": "View Mode",
+    "viewOverhead": "Overhead",
+    "viewObserver": "Observer",
+    "viewStellar": "Stellar",
     "overhead": "Overhead View",
     "observer": "Observer View",
     "stellar": "Stellar View",
@@ -45,7 +57,8 @@
     "jan": "Jan",
     "jul": "Jul",
     "backgroundStars": "Background Stars (distant)",
-    "nearStar": "Near Star"
+    "nearStar": "Near Star",
+    "lookingFromStar": "Solar system as seen from {{name}}"
   },
   "graph": {
     "title": "Graphs",
@@ -67,6 +80,9 @@
   },
   "learning": {
     "title": "Learning Panel",
+    "distanceLabel": "Distance",
+    "parallaxLabel": "Parallax Angle",
+    "parsecTitle": "Definition of Parsec",
     "stateNear": "Closer stars have a larger parallax angle and appear to shift more.",
     "stateFar": "Distant stars have a parallax angle too small to detect any movement.",
     "stateOverhead": "In the overhead view, you can see how the line of sight to a nearby star shifts as Earth orbits the Sun.",
@@ -87,6 +103,8 @@
       "question": "Star A has parallax {{p1}}″ and Star B has parallax {{p2}}″. Which is closer?",
       "choiceA": "Star A ({{p1}}″)",
       "choiceB": "Star B ({{p2}}″)",
+      "closerA": "Star A",
+      "closerB": "Star B",
       "explanation": "A larger parallax means a closer star. {{closer}} is closer, at {{d}} pc."
     },
     "parsec-def": {
@@ -102,7 +120,14 @@
     "correct": "Correct!",
     "incorrect": "Incorrect.",
     "next": "Next Question",
-    "retry": "Try Again"
+    "retry": "Try Again",
+    "seeResults": "See Results",
+    "scoreResult": "{{score}} / {{total}} correct",
+    "allCorrect": "Perfect score! Excellent!",
+    "goodJob": "Well done!",
+    "tryAgain": "Keep practicing!",
+    "questionOf": "Question {{current}} / {{total}}",
+    "scoreLabel": "Score"
   },
   "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 }

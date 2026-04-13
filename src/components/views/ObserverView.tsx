@@ -5,6 +5,7 @@ import {
   getEarthPosition,
   computeTrail,
 } from '../../utils/astronomy'
+import { useI18n } from '../../hooks/useI18n'
 import type { Star } from '../../types'
 
 // ─── 定数 ─────────────────────────────────────────────────────────────────────
@@ -34,11 +35,15 @@ export default function ObserverView() {
   const animRef = useRef<number>(0)
   const timeRef = useRef(0)
 
+  const { tr } = useI18n()
   const earthAngleDeg = useSimStore(s => s.earthAngleDeg)
   const stars = useSimStore(s => s.stars)
   const showTrail = useSimStore(s => s.showTrail)
   const compareMode = useSimStore(s => s.compareMode)
   const theme = useSimStore(s => s.theme)
+
+  const janLabel = tr('view.jan')
+  const julLabel = tr('view.jul')
 
   // 軌跡データ (恒星が変わったとき再計算)
   const trails = useMemo(
@@ -125,8 +130,8 @@ export default function ObserverView() {
           const apJan = getApparentDirection(star, earthJan)
           const apJul = getApparentDirection(star, earthJul)
 
-          drawStarDot(ctx, cx + apJan.deltaRA * scale, cy - apJan.deltaDec * scale, star.color, 7, 0.8, 'Jan')
-          drawStarDot(ctx, cx + apJul.deltaRA * scale, cy - apJul.deltaDec * scale, star.color, 7, 0.5, 'Jul')
+          drawStarDot(ctx, cx + apJan.deltaRA * scale, cy - apJan.deltaDec * scale, star.color, 7, 0.8, janLabel)
+          drawStarDot(ctx, cx + apJul.deltaRA * scale, cy - apJul.deltaDec * scale, star.color, 7, 0.5, julLabel)
 
           // 比較線
           ctx.beginPath()
@@ -164,7 +169,7 @@ export default function ObserverView() {
     frameId = requestAnimationFrame(draw)
     animRef.current = frameId
     return () => cancelAnimationFrame(frameId)
-  }, [earthAngleDeg, stars, trails, showTrail, compareMode, theme])
+  }, [earthAngleDeg, stars, trails, showTrail, compareMode, theme, janLabel, julLabel])
 
   // リサイズ
   useEffect(() => {

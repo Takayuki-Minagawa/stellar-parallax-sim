@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { useSimStore } from '../../store/simulationStore'
 import { getEarthPosition } from '../../utils/astronomy'
 import { useI18n } from '../../hooks/useI18n'
@@ -15,6 +15,7 @@ export default function StellarView() {
   const selectedStarId = useSimStore(s => s.selectedStarId)
   const earthAngleDeg = useSimStore(s => s.earthAngleDeg)
   const theme = useSimStore(s => s.theme)
+  const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 })
 
   const star = stars.find(s => s.id === selectedStarId) ?? stars[0]
 
@@ -66,9 +67,9 @@ export default function StellarView() {
     const earthPos = getEarthPosition(earthAngleDeg)
 
     // 太陽に対する地球の方向ずれ (視差に対応)
-    // 恒星から見た地球の見かけ方向
-    const eDX = earthPos.x * dAu - starX  // [au * ... ] → au単位
-    const eDZ = earthPos.z * dAu - starZ
+    // 恒星から見た地球の見かけ方向 (earthPos は 1 au 単位、starX/Z も au 単位)
+    const eDX = earthPos.x - starX
+    const eDZ = earthPos.z - starZ
     const eLen = Math.sqrt(eDX * eDX + eDZ * eDZ)
     const eNX = eDX / eLen
     const eNZ = eDZ / eLen
@@ -103,8 +104,8 @@ export default function StellarView() {
     let first = true
     for (let a = 0; a <= 360; a += 5) {
       const ep2 = getEarthPosition(a)
-      const ed2X = ep2.x * dAu - starX
-      const ed2Z = ep2.z * dAu - starZ
+      const ed2X = ep2.x - starX
+      const ed2Z = ep2.z - starZ
       const el2 = Math.sqrt(ed2X * ed2X + ed2Z * ed2Z)
       const en2X = ed2X / el2
       const en2Z = ed2Z / el2
@@ -123,10 +124,10 @@ export default function StellarView() {
     ctx.fillStyle = isDark ? '#445566' : '#6688aa'
     ctx.font = '11px sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText(`${tr('view.nearStar')}: ${star.name} から見た太陽系`, cx, 20)
+    ctx.fillText(tr('view.lookingFromStar', { name: star.name }), cx, 20)
 
     ctx.restore()
-  }, [star, earthAngleDeg, theme, tr])
+  }, [star, earthAngleDeg, theme, tr, canvasSize])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -135,6 +136,7 @@ export default function StellarView() {
       const dpr = window.devicePixelRatio || 1
       canvas.width = canvas.offsetWidth * dpr
       canvas.height = canvas.offsetHeight * dpr
+      setCanvasSize({ w: canvas.offsetWidth, h: canvas.offsetHeight })
     })
     ro.observe(canvas)
     return () => ro.disconnect()

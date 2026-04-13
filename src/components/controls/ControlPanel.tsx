@@ -8,7 +8,7 @@ import type { ViewMode, DistanceUnit } from '../../types'
 const SPEED_OPTIONS = [0.25, 0.5, 1, 2, 5, 10, 30, 60]
 
 export default function ControlPanel() {
-  const { tr } = useI18n()
+  const { tr, trArr } = useI18n()
   const {
     earthAngleDeg, setEarthAngle,
     playing, setPlaying,
@@ -25,11 +25,7 @@ export default function ControlPanel() {
 
   const selectedStar = stars.find(s => s.id === selectedStarId) ?? stars[0]
   const month = Math.floor((earthAngleDeg / 360) * 12)
-
-  const months = Array.from({ length: 12 }, (_, i) => {
-    const names = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
-    return names[i]
-  })
+  const months = trArr('months')
 
   return (
     <div className="h-full flex flex-col bg-gray-900 dark:bg-gray-950 text-gray-100 text-sm select-none overflow-y-auto">
@@ -49,7 +45,7 @@ export default function ControlPanel() {
                 : 'text-gray-500 hover:text-gray-300'
             }`}
           >
-            {tab === 'playback' ? '再生' : tab === 'star' ? '恒星' : '表示'}
+            {tab === 'playback' ? tr('controls.tabPlayback') : tab === 'star' ? tr('controls.tabStar') : tr('controls.tabDisplay')}
           </button>
         ))}
       </div>
@@ -110,11 +106,9 @@ export default function ControlPanel() {
                 className="w-full accent-blue-500"
               />
               <div className="flex justify-between text-xs text-gray-600 mt-0.5">
-                <span>1月</span>
-                <span>4月</span>
-                <span>7月</span>
-                <span>10月</span>
-                <span>12月</span>
+                {trArr('controls.sliderMonthMarkers').map((m, i) => (
+                  <span key={i}>{m}</span>
+                ))}
               </div>
             </div>
 
@@ -132,7 +126,7 @@ export default function ControlPanel() {
                         : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
                     }`}
                   >
-                    {m === 'overhead' ? '俯瞰' : m === 'observer' ? '地球視点' : '恒星視点'}
+                    {m === 'overhead' ? tr('controls.viewOverhead') : m === 'observer' ? tr('controls.viewObserver') : tr('controls.viewStellar')}
                   </button>
                 ))}
               </div>
@@ -189,7 +183,7 @@ export default function ControlPanel() {
                 }}
                 defaultValue=""
               >
-                <option value="" disabled>追加...</option>
+                <option value="" disabled>{tr('controls.addPlaceholder')}</option>
                 {STAR_PRESETS.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
@@ -199,12 +193,12 @@ export default function ControlPanel() {
             {/* 選択中の恒星を編集 */}
             {selectedStar && (
               <div className="space-y-3 border-t border-gray-700 pt-3">
-                <div className="text-xs text-gray-400 font-medium">選択中: {selectedStar.name}</div>
+                <div className="text-xs text-gray-400 font-medium">{tr('controls.selectedStar')}: {selectedStar.name}</div>
 
                 {/* 距離スライダー */}
                 <div>
                   <label className="block text-xs text-gray-400 mb-1">
-                    距離: <span className="text-white">{formatDistance(selectedStar.distancePc, distanceUnit)}</span>
+                    {tr('controls.distanceLabel')}: <span className="text-white">{formatDistance(selectedStar.distancePc, distanceUnit)}</span>
                     <span className="text-gray-500 ml-2">p = {formatParallax(selectedStar.parallaxArcsec)}</span>
                   </label>
                   <input
@@ -217,8 +211,8 @@ export default function ControlPanel() {
                     className="w-full accent-blue-500"
                   />
                   <div className="flex justify-between text-xs text-gray-600">
-                    <span>1 pc</span>
-                    <span>200 pc</span>
+                    <span>{tr('controls.distanceSliderMin')}</span>
+                    <span>{tr('controls.distanceSliderMax')}</span>
                   </div>
                 </div>
 

@@ -47,6 +47,7 @@ function PositionPlot() {
   const { tr, trArr } = useI18n()
   const earthAngleDeg = useSimStore(s => s.earthAngleDeg)
   const stars = useSimStore(s => s.stars)
+  const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 })
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -155,7 +156,7 @@ function PositionPlot() {
     })
 
     ctx.restore()
-  }, [earthAngleDeg, stars, tr, trArr])
+  }, [earthAngleDeg, stars, tr, trArr, canvasSize])
 
   // リサイズ
   useEffect(() => {
@@ -165,6 +166,7 @@ function PositionPlot() {
       const dpr = window.devicePixelRatio || 1
       canvas.width = canvas.offsetWidth * dpr
       canvas.height = canvas.offsetHeight * dpr
+      setCanvasSize({ w: canvas.offsetWidth, h: canvas.offsetHeight })
     })
     ro.observe(canvas)
     return () => ro.disconnect()
@@ -180,6 +182,7 @@ function ParallaxCurve() {
   const { tr } = useI18n()
   const stars = useSimStore(s => s.stars)
   const distanceUnit = useSimStore(s => s.distanceUnit)
+  const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 })
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -288,7 +291,7 @@ function ParallaxCurve() {
     })
 
     ctx.restore()
-  }, [stars, distanceUnit, tr])
+  }, [stars, distanceUnit, tr, canvasSize])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -297,6 +300,7 @@ function ParallaxCurve() {
       const dpr = window.devicePixelRatio || 1
       canvas.width = canvas.offsetWidth * dpr
       canvas.height = canvas.offsetHeight * dpr
+      setCanvasSize({ w: canvas.offsetWidth, h: canvas.offsetHeight })
     })
     ro.observe(canvas)
     return () => ro.disconnect()

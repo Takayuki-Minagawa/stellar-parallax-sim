@@ -76,12 +76,15 @@ export const useSimStore = create<SimState>((set) => ({
     set(s => ({ stars: [...s.stars, { ...star, id }] }))
   },
   removeStar: (id) =>
-    set(s => ({
-      stars: s.stars.filter(st => st.id !== id),
-      selectedStarId: s.selectedStarId === id
-        ? (s.stars[0]?.id ?? '')
-        : s.selectedStarId,
-    })),
+    set(s => {
+      const filtered = s.stars.filter(st => st.id !== id)
+      return {
+        stars: filtered,
+        selectedStarId: s.selectedStarId === id
+          ? (filtered[0]?.id ?? '')
+          : s.selectedStarId,
+      }
+    }),
   updateStar: (id, patch) =>
     set(s => ({
       stars: s.stars.map(st =>

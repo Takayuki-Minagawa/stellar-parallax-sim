@@ -9,7 +9,7 @@ import type { QuizQuestion } from '../../types'
 function generateQuizzes(): QuizQuestion[] {
   const quizzes: QuizQuestion[] = []
 
-  // 1. 視差角→距離
+  // 1. 視差角→距離 (選択肢は数値なので i18n 不要)
   const ps = [0.5, 0.25, 0.1, 0.2, 0.4]
   const p = ps[Math.floor(Math.random() * ps.length)]
   const d = Math.round(1 / p * 10) / 10
@@ -27,27 +27,24 @@ function generateQuizzes(): QuizQuestion[] {
     params: { p, d },
   })
 
-  // 2. どちらが近い
+  // 2. どちらが近い (選択肢・説明ともにロケールキー参照)
   const p1 = 0.5, p2 = 0.2
   quizzes.push({
     type: 'which-is-closer',
     questionKey: 'quiz.which-is-closer.question',
-    choices: [`星A（${p1}″）`, `星B（${p2}″）`],
+    choices: ['quiz.which-is-closer.choiceA', 'quiz.which-is-closer.choiceB'],
     correctIndex: 0,
     explanationKey: 'quiz.which-is-closer.explanation',
-    params: { p1, p2, closer: '星A', d: 1 / p1 },
+    // closer は説明文中で置換するため、ロケールキー参照を格納する
+    params: { p1, p2, closer: 'quiz.which-is-closer.closerA', d: 1 / p1 },
   })
 
-  // 3. 1pc の定義
+  // 3. 1pc の定義 (choicesKey でロケール配列を使用)
   quizzes.push({
     type: 'parsec-def',
     questionKey: 'quiz.parsec-def.question',
-    choices: [
-      '視差角が1秒角になる距離（約3.26光年）',
-      '光が1年間に進む距離（1光年）',
-      '地球と太陽の平均距離（1天文単位）',
-      '視差角が1度になる距離',
-    ],
+    choices: [],
+    choicesKey: 'quiz.parsec-def.choices',
     correctIndex: 0,
     explanationKey: 'quiz.parsec-def.explanation',
     params: {},
@@ -121,8 +118,14 @@ function ExplainView() {
             <span className="font-semibold text-sm">{star.name}</span>
           </div>
           <div className="text-xs text-gray-400 space-y-0.5">
-            <div>距離: <span className="text-white font-mono">{formatDistance(star.distancePc, distanceUnit)}</span></div>
-            <div>視差角: <span className="text-white font-mono">{formatParallax(distanceToParallax(star.distancePc))}</span></div>
+            <div>
+              {tr('learning.distanceLabel')}:{' '}
+              <span className="text-white font-mono">{formatDistance(star.distancePc, distanceUnit)}</span>
+            </div>
+            <div>
+              {tr('learning.parallaxLabel')}:{' '}
+              <span className="text-white font-mono">{formatParallax(distanceToParallax(star.distancePc))}</span>
+            </div>
             <div className="text-blue-400 font-mono text-xs mt-1">d [pc] = 1 / p [″]</div>
           </div>
         </div>
@@ -143,7 +146,7 @@ function ExplainView() {
 
       {/* 定義 */}
       <div className="rounded-lg bg-indigo-950 border border-indigo-800 p-3 text-xs text-indigo-200 space-y-1">
-        <div className="font-semibold text-indigo-300">パーセクの定義</div>
+        <div className="font-semibold text-indigo-300">{tr('learning.parsecTitle')}</div>
         <div>{tr('learning.parsecDef')}</div>
         <div className="font-mono text-blue-400 mt-1">{tr('learning.parallaxFormula')}</div>
       </div>
@@ -154,7 +157,7 @@ function ExplainView() {
 // ─── クイズビュー ──────────────────────────────────────────────────────────────
 
 function QuizView() {
-  const { tr } = useI18n()
+  const { tr, trArr } = useI18n()
   const [quizzes] = useState<QuizQuestion[]>(generateQuizzes)
   const [index, setIndex] = useState(0)
   const [answered, setAnswered] = useState<number | null>(null)
@@ -162,6 +165,26 @@ function QuizView() {
   const [done, setDone] = useState(false)
 
   const q = quizzes[index]
+
+  // params 内のロケールキー参照（'quiz.' で始まる文字列）を解決する
+  const resolvedParams = useMemo((): Record<string, string> => {
+    if (!q?.params) return {}
+    return Object.fromEntries(
+      Object.entries(q.params).map(([k, v]) => {
+        const s = String(v)
+        return [k, s.startsWith('quiz.') ? tr(s) : s]
+      })
+    )
+  }, [q, tr])
+
+  // 選択肢テキストを取得（ロケールキー参照・配列キー・リテラルに対応）
+  const choices = useMemo((): string[] => {
+    if (!q) return []
+    if (q.choicesKey) return trArr(q.choicesKey)
+    return q.choices.map(c =>
+      c.startsWith('quiz.') ? tr(c, resolvedParams) : c
+    )
+  }, [q, tr, trArr, resolvedParams])
 
   const handleAnswer = (i: number) => {
     if (answered !== null) return
@@ -186,16 +209,18 @@ function QuizView() {
   }
 
   if (done) {
+    const resultMsg =
+      score === quizzes.length ? tr('quiz.allCorrect') :
+      score >= quizzes.length * 0.7 ? tr('quiz.goodJob') :
+      tr('quiz.tryAgain')
+
     return (
       <div className="px-4 py-6 text-center space-y-4">
         <div className="text-4xl">🌟</div>
         <div className="text-lg font-semibold">
-          {score} / {quizzes.length} 問正解
+          {tr('quiz.scoreResult', { score: String(score), total: String(quizzes.length) })}
         </div>
-        <div className="text-sm text-gray-400">
-          {score === quizzes.length ? '全問正解！素晴らしい！' :
-           score >= quizzes.length * 0.7 ? 'よくできました！' : 'もう一度挑戦してみましょう。'}
-        </div>
+        <div className="text-sm text-gray-400">{resultMsg}</div>
         <button
           onClick={handleRetry}
           className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-sm transition-colors"
@@ -208,28 +233,22 @@ function QuizView() {
 
   if (!q) return null
 
-  const explanation = tr(q.explanationKey, Object.fromEntries(
-    Object.entries(q.params ?? {}).map(([k, v]) => [k, String(v)])
-  ))
-
   return (
     <div className="px-3 py-3 space-y-3">
       {/* 問題番号 */}
       <div className="flex justify-between items-center text-xs text-gray-500">
-        <span>問題 {index + 1} / {quizzes.length}</span>
-        <span>スコア: {score}</span>
+        <span>{tr('quiz.questionOf', { current: String(index + 1), total: String(quizzes.length) })}</span>
+        <span>{tr('quiz.scoreLabel')}: {score}</span>
       </div>
 
       {/* 問題文 */}
       <div className="bg-gray-800 rounded-lg p-3 text-sm text-gray-100">
-        {tr(q.questionKey, Object.fromEntries(
-          Object.entries(q.params ?? {}).map(([k, v]) => [k, String(v)])
-        ))}
+        {tr(q.questionKey, resolvedParams)}
       </div>
 
       {/* 選択肢 */}
       <div className="space-y-2">
-        {q.choices.map((choice, i) => {
+        {choices.map((choice, i) => {
           let style = 'bg-gray-800 hover:bg-gray-700 border-gray-600'
           if (answered !== null) {
             if (i === q.correctIndex) style = 'bg-green-900 border-green-600 text-green-200'
@@ -259,7 +278,7 @@ function QuizView() {
           <div className="font-semibold mb-1">
             {answered === q.correctIndex ? tr('quiz.correct') : tr('quiz.incorrect')}
           </div>
-          <div className="text-gray-300">{explanation}</div>
+          <div className="text-gray-300">{tr(q.explanationKey, resolvedParams)}</div>
         </div>
       )}
 
@@ -269,7 +288,7 @@ function QuizView() {
           onClick={handleNext}
           className="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded text-sm transition-colors"
         >
-          {index + 1 >= quizzes.length ? '結果を見る' : tr('quiz.next')}
+          {index + 1 >= quizzes.length ? tr('quiz.seeResults') : tr('quiz.next')}
         </button>
       )}
     </div>
