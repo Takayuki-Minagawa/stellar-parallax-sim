@@ -26,23 +26,28 @@
   - 距離スライダーで 1 pc ～ 200 pc を連続変更
   - カスタム恒星の追加・削除
   - 距離単位の切替（pc / 光年 / au）
-- **表示設定**: 残像軌跡・視差補助線・1月/7月比較モードの ON/OFF
+- **表示設定**: 残像軌跡・視差補助線・1月/7月比較・年周光行差の ON/OFF
 
 ### グラフパネル
 
 | グラフ | 内容 |
 |--------|------|
 | **見かけ位置の変化** | 1年間を通じた見かけ方向（RA・Dec）の軌跡プロット。各月の位置を点で表示。 |
-| **視差角 vs 距離** | `p = 1/d` の反比例カーブと、選択中の恒星の現在値をリアルタイムで重ね表示。 |
+| **視差角 vs 距離** | `p = 1/d` の反比例カーブと、選択中の恒星の現在値をリアルタイムで重ね表示。地上望遠鏡・ヒッパルコス衛星・ガイア衛星の検出限界を破線で表示。 |
 
 ### 学習パネル
 
 - 現在の操作状態に応じた解説文（視点・距離によって内容が変化）
 - パーセクの定義・視差公式の説明カード
+- 年周光行差の説明（光行差定数 κ ≈ 20.49″、赤道面モデルでの 1D 動作の注記）
+- 観測精度テーブル（地上 / Hipparcos / Gaia）：選択中の恒星が各精度で検出可能かをリアルタイム判定
 - 理解度クイズ（3 問）: 視差角→距離の計算・近い星の判定・1 pc の定義
 
 ### その他
 
+- **年周光行差オーバーレイ**: 地球視点ビューに橙色破線で光行差楕円を重ね表示。視差との位相差を視覚的に比較できます。
+- **URL 共有**: ヘッダーの 🔗 ボタンで現在の言語・テーマ・視点・恒星設定を URL にエンコードしてコピー。開くだけで同じ状態が復元されます。
+- **PWA 対応**: ブラウザの「ホーム画面に追加」でオフラインでも利用可能なアプリとしてインストールできます。
 - **日本語 / English** 切替
 - **ライト / ダーク** テーマ切替
 - PC・タブレット・スマートフォン対応のレスポンシブレイアウト
@@ -89,11 +94,19 @@ $$d \,[\mathrm{pc}] = \frac{1}{p \,[\mathrm{arcsec}]}$$
 
 距離スライダーを変化させると視差角がリアルタイムに再計算され、グラフの現在点が連動します。
 
+### 年周光行差
+
+地球の公転速度（約 30 km/s）と光速の比（v/c ≈ 1/10000）によって生じる見かけの方向ずれを実装しています。
+
+$$\Delta\mathrm{RA} = \kappa \cdot \cos(\theta - \varphi), \quad \kappa \approx 20.49''$$
+
+赤道面モデルのため Dec 方向のずれは 0（1次元の往復運動）となります。実際の空では黄緯によって楕円を描きます。視差とは 90° 位相がずれており、距離に依存しません。
+
 ### 精度に関する注記
 
 - 地球公転軌道を真円で近似しているため、実際の楕円軌道（離心率 ≈ 0.017）との差異があります
-- 恒星の固有運動・年周光行差は考慮していません
-- 視差は赤道面に対して水平（Dec 方向ずれ = 0）に計算されます。実際の恒星は黄道面に対して様々な傾きを持ちます
+- 恒星の固有運動は考慮していません
+- 視差・光行差ともに赤道面内（Y=0）で計算されます。実際の恒星は黄道面に対して様々な傾きを持ちます
 
 ---
 
@@ -108,6 +121,7 @@ $$d \,[\mathrm{pc}] = \frac{1}{p \,[\mathrm{arcsec}]}$$
 | 状態管理 | Zustand 5 |
 | スタイリング | Tailwind CSS 3 |
 | i18n | 自前ロード機構（`public/locales/{lang}.json`） |
+| PWA | vite-plugin-pwa（Service Worker 自動生成・Web App Manifest） |
 | CI/CD | GitHub Actions → GitHub Pages |
 
 ---
@@ -120,6 +134,10 @@ stellar-parallax-sim/
 │   └── workflows/
 │       └── deploy.yml          # GitHub Pages 自動デプロイ
 ├── public/
+│   ├── favicon.svg             # アプリアイコン (SVG)
+│   ├── icons/
+│   │   ├── icon-192.svg        # PWA アイコン 192px
+│   │   └── icon-512.svg        # PWA アイコン 512px
 │   └── locales/
 │       ├── ja.json             # 日本語 UI テキスト
 │       └── en.json             # English UI text
@@ -135,14 +153,15 @@ stellar-parallax-sim/
 │   ├── store/
 │   │   └── simulationStore.ts  # Zustand グローバル状態
 │   ├── utils/
-│   │   ├── astronomy.ts        # 天文計算ユーティリティ
+│   │   ├── astronomy.ts        # 天文計算・視差・光行差・観測精度
 │   │   └── i18n.ts             # i18n ロード・テキスト取得関数
 │   ├── hooks/
 │   │   ├── useTheme.ts         # ダーク/ライトテーマ管理
-│   │   └── useI18n.ts          # 翻訳フック
+│   │   ├── useI18n.ts          # 翻訳フック
+│   │   └── useUrlSync.ts       # URL クエリパラメータ双方向同期
 │   └── components/
 │       ├── layout/
-│       │   └── Header.tsx      # ヘッダー (タイトル・テーマ切替・言語切替)
+│       │   └── Header.tsx      # ヘッダー (タイトル・共有・テーマ・言語)
 │       ├── controls/
 │       │   └── ControlPanel.tsx # 操作パネル (再生・恒星・表示設定タブ)
 │       ├── views/
@@ -169,7 +188,7 @@ Node.js 18 以上が必要です。
 
 ```bash
 # リポジトリのクローン
-git clone https://github.com/<your-username>/stellar-parallax-sim.git
+git clone https://github.com/Takayuki-Minagawa/stellar-parallax-sim.git
 cd stellar-parallax-sim
 
 # 依存パッケージのインストール
@@ -197,7 +216,7 @@ npm run preview
 
 リポジトリを GitHub に作成した後、**Settings → Pages → Source** を `GitHub Actions` に設定してください。
 
-デプロイ後の URL は `https://<your-username>.github.io/stellar-parallax-sim/` になります。
+デプロイ後の URL は `https://takayuki-minagawa.github.io/stellar-parallax-sim/` になります。
 
 ---
 
