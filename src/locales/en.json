@@ -87,13 +87,15 @@
     "parallaxP": "p",
     "apparentPos": "Apparent position",
     "halfYearSep": "6-month shift {{v}}",
-    "aberInsetTitle": "Shape & timing (sizes normalized)",
+    "aberInsetTitle": "Shape & timing",
     "parallaxShort": "Parallax",
     "aberrationShort": "Aberration",
     "lookingFromStar": "The solar system seen from {{name}}",
     "stellarDistance": "Distance {{d}} ({{au}})",
     "stellarMax": "max = p = {{p}}",
-    "stellarNow": "now {{v}}"
+    "stellarNow": "now {{v}}",
+    "aberInsetSub": "sizes normalized",
+    "compass": "← E   N ↑   W →"
   },
   "controls": {
     "tabStars": "Stars",
@@ -143,9 +145,9 @@
     "tabPath": "Apparent path",
     "tabTime": "Over time",
     "tabCurve": "Parallax vs distance",
-    "xLon": "Shift in ecliptic longitude [″]",
-    "yLat": "Latitude [″]",
-    "yTime": "Shift [″]",
+    "xLon": "Longitude shift [{{unit}}] (east to the left)",
+    "yLat": "Latitude [{{unit}}]",
+    "yTime": "Shift [{{unit}}]",
     "seriesLon": "Longitude",
     "seriesLat": "Latitude",
     "seriesAber": "Aberration (right axis)",
@@ -156,7 +158,8 @@
     "distAxis": "Distance d [pc]",
     "parAxis": "Parallax p [″]",
     "limitLabel": "{{name}} limit (~{{d}} pc)",
-    "farHidden": "Switch to Log to see distant stars"
+    "farHidden": "Switch to Log to see distant stars",
+    "xEastLeft": "″ (east left)"
   },
   "info": {
     "distance": "Distance",

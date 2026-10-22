@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useSimStore } from '../../store/simulationStore'
 import {
-  computeTrail, getApparentOffset, distanceToParallax, niceStep, formatTick,
+  computeTrail, getApparentOffset, distanceToParallax, niceStep, formatTick, angleAxisUnit,
 } from '../../utils/astronomy'
 import { getPalette, hexToRgba, drawGlowStar, readableStarColor } from '../../utils/canvas'
 import { useCanvas } from '../../hooks/useCanvas'
@@ -29,14 +29,16 @@ export default function PathPlot() {
     const scale = size / 2 / maxP
     const step = niceStep(maxP / 2.5)
     const ticks = symmetricTicks(maxP, step)
+    const { factor, unit } = angleAxisUnit(maxP)
+    const label = (v: number) => formatTick(v * factor, step * factor)
 
     drawFrame(ctx, pal, area, {
       w, h,
       yLabelX: Math.max(11, area.left - 36),
-      xTicks: ticks.map(v => ({ pos: cx + v * scale, label: formatTick(v, step), major: v === 0 })),
-      yTicks: ticks.map(v => ({ pos: cy - v * scale, label: formatTick(v, step), major: v === 0 })),
-      xLabel: tr('graph.xLon'),
-      yLabel: tr('graph.yLat'),
+      xTicks: ticks.map(v => ({ pos: cx - v * scale, label: label(v), major: v === 0 })),
+      yTicks: ticks.map(v => ({ pos: cy - v * scale, label: label(v), major: v === 0 })),
+      xLabel: tr('graph.xLon', { unit }),
+      yLabel: tr('graph.yLat', { unit }),
     })
 
     stars.forEach((star, idx) => {
@@ -45,7 +47,7 @@ export default function PathPlot() {
       ctx.save()
       ctx.beginPath()
       trails[idx].forEach((ap, i) => {
-        const x = cx + ap.dLon * scale
+        const x = cx - ap.dLon * scale
         const y = cy - ap.dLat * scale
         if (i === 0) ctx.moveTo(x, y)
         else ctx.lineTo(x, y)
@@ -57,7 +59,7 @@ export default function PathPlot() {
       if (isSel) {
         for (let m = 0; m < 12; m++) {
           const ap = getApparentOffset(star, (m / 12) * 360)
-          const x = cx + ap.dLon * scale
+          const x = cx - ap.dLon * scale
           const y = cy - ap.dLat * scale
           ctx.fillStyle = hexToRgba(color, 0.9)
           ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill()
@@ -75,7 +77,7 @@ export default function PathPlot() {
       }
       ctx.restore()
       const curr = getApparentOffset(star, earthAngleDeg)
-      drawGlowStar(ctx, cx + curr.dLon * scale, cy - curr.dLat * scale, color, isSel ? 5 : 3.5)
+      drawGlowStar(ctx, cx - curr.dLon * scale, cy - curr.dLat * scale, color, isSel ? 5 : 3.5)
     })
   }, [earthAngleDeg, stars, selectedStarId, theme, tr, trails, months])
 

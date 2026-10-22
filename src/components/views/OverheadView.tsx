@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Stars, Line, Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -8,6 +8,7 @@ import {
 } from '../../utils/astronomy'
 import { seededRandom } from '../../utils/canvas'
 import { useI18n } from '../../hooks/useI18n'
+import type { Line2 } from 'three-stdlib'
 import type { Star, Vec3, CameraPreset } from '../../types'
 
 // ─── 縮尺 (教育用に誇張) ──────────────────────────────────────────────────────
@@ -15,8 +16,8 @@ import type { Star, Vec3, CameraPreset } from '../../types'
 const ORBIT_R = 4
 /** 背景の天球 (遠い星を投影するスクリーン) までの距離 */
 const SCREEN_DIST = 20
-/** 恒星の表示距離: 実距離を対数で圧縮 */
-const starSceneDist = (pc: number) => 6 + 4 * Math.log10(1 + pc)
+/** 恒星の表示距離: 実距離を対数で圧縮 (1e5 pc でも背景の天球より手前に収める) */
+const starSceneDist = (pc: number) => Math.min(SCREEN_DIST - 1, 6 + 2.6 * Math.log10(1 + pc))
 
 /** 黄道座標 (z = 北) → three.js 座標 (y = 上) */
 const toScene = (v: Vec3, k = 1) => new THREE.Vector3(v.x * k, v.z * k, -v.y * k)
@@ -82,6 +83,68 @@ function CameraRig() {
   return null
 }
 
+// ─── 公転に追従する要素 ───────────────────────────────────────────────────────
+// 再生中に毎フレーム React を再レンダリングすると drei の <Line> がジオメトリと
+// マテリアルを作り直す (シェーダーの再コンパイルが走る) ため、角度に依存する要素は
+// useFrame の中で位置だけを直接書き換える。
+
+const currentAngle = () => useSimStore.getState().earthAngleDeg
+const earthScenePos = (angleDeg: number) => toScene(getEarthPosition(angleDeg), ORBIT_R)
+
+/** 既存の Line2 ジオメトリの頂点を、バッファを作り直さずに上書きする */
+function writeLinePoints(line: Line2, pts: THREE.Vector3[]) {
+  const attr = line.geometry.attributes.instanceStart as THREE.InterleavedBufferAttribute | undefined
+  if (!attr) return
+  const arr = attr.data.array as Float32Array
+  const n = Math.min(pts.length - 1, Math.floor(arr.length / 6))
+  for (let i = 0; i < n; i++) {
+    const a = pts[i]
+    const b = pts[i + 1]
+    arr[i * 6] = a.x; arr[i * 6 + 1] = a.y; arr[i * 6 + 2] = a.z
+    arr[i * 6 + 3] = b.x; arr[i * 6 + 4] = b.y; arr[i * 6 + 5] = b.z
+  }
+  attr.data.needsUpdate = true
+}
+
+/** 公転角度に応じて頂点が変わる線 (頂点数は一定であること) */
+function DynamicLine({ compute, color, lineWidth = 1, opacity = 1 }: {
+  compute: (angleDeg: number) => THREE.Vector3[]
+  color: string
+  lineWidth?: number
+  opacity?: number
+}) {
+  const ref = useRef<Line2>(null)
+  // 初期頂点はマウント時に一度だけ作る (以降は useFrame で書き換え)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const initial = useMemo(() => compute(currentAngle()), [])
+  useFrame(() => {
+    if (ref.current) writeLinePoints(ref.current, compute(currentAngle()))
+  })
+  return (
+    <Line
+      ref={ref}
+      points={initial}
+      color={color}
+      lineWidth={lineWidth}
+      transparent={opacity < 1}
+      opacity={opacity}
+      frustumCulled={false}
+    />
+  )
+}
+
+/** 公転角度に応じて位置が変わるグループ (メッシュや Html ラベルを入れる) */
+function FollowGroup({ position, children }: {
+  position: (angleDeg: number) => THREE.Vector3
+  children: ReactNode
+}) {
+  const ref = useRef<THREE.Group>(null)
+  useFrame(() => {
+    ref.current?.position.copy(position(currentAngle()))
+  })
+  return <group ref={ref} position={position(currentAngle())}>{children}</group>
+}
+
 // ─── 太陽・地球 ───────────────────────────────────────────────────────────────
 function Sun({ label }: { label: string }) {
   return (
@@ -101,10 +164,9 @@ function Sun({ label }: { label: string }) {
   )
 }
 
-function Earth({ angleDeg, ghost = false, label }: { angleDeg: number; ghost?: boolean; label?: string }) {
-  const pos = toScene(getEarthPosition(angleDeg), ORBIT_R)
+function Earth({ offsetDeg = 0, ghost = false, label }: { offsetDeg?: number; ghost?: boolean; label?: string }) {
   return (
-    <group position={pos}>
+    <FollowGroup position={a => earthScenePos(a + offsetDeg)}>
       <mesh>
         <sphereGeometry args={[0.24, 24, 24]} />
         <meshStandardMaterial
@@ -119,16 +181,16 @@ function Earth({ angleDeg, ghost = false, label }: { angleDeg: number; ghost?: b
           <span className="scene-label" style={{ color: ghost ? '#f9a8d4' : '#93c5fd' }}>{label}</span>
         </Html>
       )}
-    </group>
+    </FollowGroup>
   )
 }
 
-function Orbit({ monthsShort, auLabel, angleDeg }: { monthsShort: string[]; auLabel: string; angleDeg: number }) {
+function Orbit({ monthsShort, auLabel }: { monthsShort: string[]; auLabel: string }) {
   const ring = useMemo(
-    () => Array.from({ length: 181 }, (_, i) => toScene(getEarthPosition((i / 180) * 360), ORBIT_R)),
+    () => Array.from({ length: 181 }, (_, i) => earthScenePos((i / 180) * 360)),
     []
   )
-  const earth = toScene(getEarthPosition(angleDeg), ORBIT_R)
+  const origin = useMemo(() => new THREE.Vector3(0, 0, 0), [])
   return (
     <group>
       <Line points={ring} color="#5b7bb5" lineWidth={1.2} />
@@ -138,10 +200,12 @@ function Orbit({ monthsShort, auLabel, angleDeg }: { monthsShort: string[]; auLa
         <meshBasicMaterial color="#3b5a99" transparent opacity={0.05} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
       {/* 1 au の半径線 */}
-      <Line points={[new THREE.Vector3(0, 0, 0), earth]} color="#7da3e0" lineWidth={1} transparent opacity={0.6} />
-      <Html position={earth.clone().multiplyScalar(0.5).add(new THREE.Vector3(0, 0.35, 0))} center zIndexRange={LABEL_Z}>
-        <span className="scene-label" style={{ color: '#9db8e8', fontWeight: 500 }}>{auLabel}</span>
-      </Html>
+      <DynamicLine compute={a => [origin, earthScenePos(a)]} color="#7da3e0" lineWidth={1} opacity={0.6} />
+      <FollowGroup position={a => earthScenePos(a).multiplyScalar(0.5).add(new THREE.Vector3(0, 0.35, 0))}>
+        <Html center zIndexRange={LABEL_Z}>
+          <span className="scene-label" style={{ color: '#9db8e8', fontWeight: 500 }}>{auLabel}</span>
+        </Html>
+      </FollowGroup>
       {/* 月の目盛り */}
       {[0, 3, 6, 9].map(m => {
         const p = toScene(getEarthPosition(monthToAngle(m)), ORBIT_R * 1.22)
@@ -157,9 +221,9 @@ function Orbit({ monthsShort, auLabel, angleDeg }: { monthsShort: string[]; auLa
 
 // ─── 恒星 ─────────────────────────────────────────────────────────────────────
 function NearStar({ star, selected, label }: { star: Star; selected: boolean; label: string }) {
-  const u = starUnitVector(star)
-  const pos = toScene(u, starSceneDist(star.distancePc))
-  const foot = new THREE.Vector3(pos.x, 0, pos.z)
+  const pos = useMemo(() => toScene(starUnitVector(star), starSceneDist(star.distancePc)), [star])
+  const foot = useMemo(() => new THREE.Vector3(pos.x, 0, pos.z), [pos])
+  const drop = useMemo(() => [pos, foot], [pos, foot])
   const r = selected ? 0.4 : 0.28
   return (
     <group>
@@ -173,7 +237,7 @@ function NearStar({ star, selected, label }: { star: Star; selected: boolean; la
       </mesh>
       {/* 黄道面への垂線 (黄緯を立体的に把握するため) */}
       {Math.abs(pos.y) > 0.3 && (
-        <Line points={[pos, foot]} color={star.color} lineWidth={0.8} dashed dashSize={0.4} gapSize={0.3} transparent opacity={0.4} />
+        <Line points={drop} color={star.color} lineWidth={0.8} dashed dashSize={0.4} gapSize={0.3} transparent opacity={0.4} />
       )}
       <Html position={[pos.x + 0.5, pos.y + 0.5, pos.z]} zIndexRange={LABEL_Z}>
         <span className="scene-label" style={{ color: star.color, fontSize: selected ? 12 : 11, opacity: selected ? 1 : 0.8 }}>
@@ -191,10 +255,18 @@ function screenHit(u: THREE.Vector3, starPos: THREE.Vector3, earth: THREE.Vector
   return earth.clone().add(starPos.clone().sub(earth).multiplyScalar(t))
 }
 
+/** 恒星から見た「太陽方向」と「地球方向」のなす角の弧 (その瞬間の視差) */
+const ARC_R = 1.6
+function parallaxArc(starPos: THREE.Vector3, earth: THREE.Vector3): THREE.Vector3[] {
+  const a = new THREE.Vector3().sub(starPos).normalize()
+  const b = earth.clone().sub(starPos).normalize()
+  return Array.from({ length: 17 }, (_, i) =>
+    starPos.clone().add(a.clone().lerp(b, i / 16).normalize().multiplyScalar(ARC_R)))
+}
+
 /** 選択中の恒星: 視線・背景の天球・軌跡・視差角 */
-function SightGeometry({ star, angleDeg, labels }: {
+function SightGeometry({ star, labels }: {
   star: Star
-  angleDeg: number
   labels: { screen: string; p: string; apparent: string }
 }) {
   const showTrail = useSimStore(s => s.showTrail)
@@ -204,16 +276,15 @@ function SightGeometry({ star, angleDeg, labels }: {
   const u = useMemo(() => toScene(starUnitVector(star)), [star])
   const starPos = useMemo(() => u.clone().multiplyScalar(starSceneDist(star.distancePc)), [u, star.distancePc])
   const center = useMemo(() => u.clone().multiplyScalar(SCREEN_DIST), [u])
+  const origin = useMemo(() => new THREE.Vector3(0, 0, 0), [])
+  const sunToScreen = useMemo(() => [origin, center], [origin, center])
+  const sunToStar = useMemo(() => [origin, starPos], [origin, starPos])
 
   const trail = useMemo(
-    () => Array.from({ length: 121 }, (_, i) =>
-      screenHit(u, starPos, toScene(getEarthPosition((i / 120) * 360), ORBIT_R))),
+    () => Array.from({ length: 121 }, (_, i) => screenHit(u, starPos, earthScenePos((i / 120) * 360))),
     [u, starPos]
   )
-  const trailRadius = useMemo(
-    () => Math.max(...trail.map(p => p.distanceTo(center))),
-    [trail, center]
-  )
+  const trailRadius = useMemo(() => Math.max(...trail.map(p => p.distanceTo(center))), [trail, center])
   const screenRadius = Math.max(3.5, trailRadius * 1.45)
 
   const quat = useMemo(() => new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), u), [u])
@@ -230,24 +301,11 @@ function SightGeometry({ star, angleDeg, labels }: {
     return arr
   }, [])
 
-  const earth = toScene(getEarthPosition(angleDeg), ORBIT_R)
-  const hit = screenHit(u, starPos, earth)
-  const ghostEarth = toScene(getEarthPosition(angleDeg + 180), ORBIT_R)
-  const ghostHit = screenHit(u, starPos, ghostEarth)
-
-  // 恒星における「太陽方向」と「地球方向」のなす角 (= その瞬間の視差)
-  const arc = useMemo(() => {
-    const a = new THREE.Vector3().sub(starPos).normalize()
-    const b = earth.clone().sub(starPos).normalize()
-    const R = 1.6
-    return Array.from({ length: 17 }, (_, i) => {
-      const t = i / 16
-      return starPos.clone().add(a.clone().lerp(b, t).normalize().multiplyScalar(R))
-    })
-  }, [starPos, earth])
+  const hitAt = (a: number) => screenHit(u, starPos, earthScenePos(a))
 
   return (
-    <group>
+    // 恒星の位置が変わったら公転追従の要素も初期化し直す
+    <group key={`${u.x},${u.y},${u.z},${starPos.length()}`}>
       {/* 背景の天球 (遠い恒星のスクリーン) */}
       <group position={center} quaternion={quat}>
         <mesh>
@@ -266,7 +324,7 @@ function SightGeometry({ star, angleDeg, labels }: {
       </group>
 
       {/* 太陽から見た方向 (基準) */}
-      <Line points={[new THREE.Vector3(0, 0, 0), center]} color="#94a3b8" lineWidth={1} dashed dashSize={0.6} gapSize={0.5} transparent opacity={0.55} />
+      <Line points={sunToScreen} color="#94a3b8" lineWidth={1} dashed dashSize={0.6} gapSize={0.5} transparent opacity={0.55} />
       <mesh position={center}>
         <sphereGeometry args={[0.18, 12, 12]} />
         <meshBasicMaterial color="#94a3b8" />
@@ -275,37 +333,48 @@ function SightGeometry({ star, angleDeg, labels }: {
       {/* 背景天球上の見かけの軌跡 */}
       {showTrail && <Line points={trail} color={star.color} lineWidth={2} transparent opacity={0.85} />}
 
-      {/* 地球からの視線 */}
-      <Line points={[earth, starPos]} color="#fde047" lineWidth={1.8} />
-      <Line points={[starPos, hit]} color="#fde047" lineWidth={1.2} dashed dashSize={0.5} gapSize={0.4} transparent opacity={0.8} />
-      <mesh position={hit}>
-        <sphereGeometry args={[0.32, 16, 16]} />
-        <meshBasicMaterial color={star.color} />
-      </mesh>
-      <Html position={[hit.x, hit.y + 0.7, hit.z]} center zIndexRange={LABEL_Z}>
-        <span className="scene-label" style={{ color: '#fde047', fontWeight: 500 }}>{labels.apparent}</span>
-      </Html>
+      {/* 地球からの視線 (恒星より先は背景の天球まで延長) */}
+      <DynamicLine compute={a => [earthScenePos(a), starPos]} color="#fde047" lineWidth={1.8} />
+      <DynamicLine compute={a => [starPos, hitAt(a)]} color="#fde047" lineWidth={1.2} opacity={0.55} />
+      <FollowGroup position={hitAt}>
+        <mesh>
+          <sphereGeometry args={[0.32, 16, 16]} />
+          <meshBasicMaterial color={star.color} />
+        </mesh>
+        <Html position={[0, 0.7, 0]} center zIndexRange={LABEL_Z}>
+          <span className="scene-label" style={{ color: '#fde047', fontWeight: 500 }}>{labels.apparent}</span>
+        </Html>
+      </FollowGroup>
 
       {compareMode && (
         <>
-          <Earth angleDeg={angleDeg + 180} ghost />
-          <Line points={[ghostEarth, ghostHit]} color="#f472b6" lineWidth={1.2} dashed dashSize={0.5} gapSize={0.4} />
-          <mesh position={ghostHit}>
-            <sphereGeometry args={[0.26, 16, 16]} />
-            <meshBasicMaterial color="#f472b6" />
-          </mesh>
-          <Line points={[hit, ghostHit]} color="#f472b6" lineWidth={2} />
+          <Earth offsetDeg={180} ghost />
+          <DynamicLine compute={a => [earthScenePos(a + 180), hitAt(a + 180)]} color="#f472b6" lineWidth={1.2} opacity={0.7} />
+          <FollowGroup position={a => hitAt(a + 180)}>
+            <mesh>
+              <sphereGeometry args={[0.26, 16, 16]} />
+              <meshBasicMaterial color="#f472b6" />
+            </mesh>
+          </FollowGroup>
+          <DynamicLine compute={a => [hitAt(a), hitAt(a + 180)]} color="#f472b6" lineWidth={2} />
         </>
       )}
 
       {/* 視差角 p */}
       {showParallaxLine && (
         <>
-          <Line points={[new THREE.Vector3(0, 0, 0), starPos]} color="#94a3b8" lineWidth={1.2} />
-          <Line points={arc} color="#fb7185" lineWidth={2.5} />
-          <Html position={arc[8].clone().add(arc[8].clone().sub(starPos).multiplyScalar(0.45))} center zIndexRange={LABEL_Z}>
-            <span className="scene-label" style={{ color: '#fb7185', fontSize: 13 }}>{labels.p}</span>
-          </Html>
+          <Line points={sunToStar} color="#94a3b8" lineWidth={1.2} />
+          <DynamicLine compute={a => parallaxArc(starPos, earthScenePos(a))} color="#fb7185" lineWidth={2.5} />
+          <FollowGroup
+            position={a => {
+              const mid = parallaxArc(starPos, earthScenePos(a))[8]
+              return mid.clone().add(mid.clone().sub(starPos).multiplyScalar(0.45))
+            }}
+          >
+            <Html center zIndexRange={LABEL_Z}>
+              <span className="scene-label" style={{ color: '#fb7185', fontSize: 13 }}>{labels.p}</span>
+            </Html>
+          </FollowGroup>
         </>
       )}
     </group>
@@ -313,10 +382,10 @@ function SightGeometry({ star, angleDeg, labels }: {
 }
 
 // ─── シーン ───────────────────────────────────────────────────────────────────
+// earthAngleDeg は購読しない (公転は上の useFrame 系コンポーネントで反映)
 function Scene() {
   const { tr, trArr } = useI18n()
   const stars = useSimStore(s => s.stars)
-  const earthAngleDeg = useSimStore(s => s.earthAngleDeg)
   const language = useSimStore(s => s.language)
   const selected = useSelectedStar()
 
@@ -327,8 +396,8 @@ function Scene() {
       <Stars radius={160} depth={60} count={2500} factor={4} saturation={0.4} fade speed={0.4} />
 
       <Sun label={tr('view.sun')} />
-      <Orbit monthsShort={trArr('monthsShort')} auLabel="1 au" angleDeg={earthAngleDeg} />
-      <Earth angleDeg={earthAngleDeg} label={tr('view.earth')} />
+      <Orbit monthsShort={trArr('monthsShort')} auLabel="1 au" />
+      <Earth label={tr('view.earth')} />
 
       {stars.map(star => (
         <NearStar
@@ -341,7 +410,6 @@ function Scene() {
       {selected && (
         <SightGeometry
           star={selected}
-          angleDeg={earthAngleDeg}
           labels={{ screen: tr('view.screen'), p: tr('view.parallaxP'), apparent: tr('view.apparentPos') }}
         />
       )}

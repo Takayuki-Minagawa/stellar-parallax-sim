@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useSimStore } from '../../store/simulationStore'
+import { useSimStore, WELCOME_KEY } from '../../store/simulationStore'
 import { useI18n } from '../../hooks/useI18n'
-
-const WELCOME_KEY = 'sps-welcome-seen'
 
 interface Step { icon: string; title: string; body: string }
 
@@ -33,10 +31,7 @@ export default function HelpModal() {
   const shortcuts = trArr('help.shortcuts')
   const isLast = step >= steps.length - 1
 
-  const close = () => {
-    try { localStorage.setItem(WELCOME_KEY, '1') } catch { /* ignore */ }
-    setOpen(false)
-  }
+  const close = () => setOpen(false)
 
   return (
     <div

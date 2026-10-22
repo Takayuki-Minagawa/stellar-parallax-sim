@@ -78,7 +78,8 @@ const GENERATORS: (() => QuizSeed)[] = [
     const p = sep / 2
     return seed('halfYearShift', 4, tr => ({
       question: tr('quiz.q.halfYearShift.question', { sep }),
-      choices: [`${fmt(1 / p)} pc`, `${fmt(1 / sep)} pc`, `${fmt(sep)} pc`, `${fmt(2 / p)} pc`],
+      // 正解 2/sep、誤答: 2p と取り違え (1/sep)・p と d の取り違え (p)・半分にし忘れの逆 (4/sep)
+      choices: [`${fmt(1 / p)} pc`, `${fmt(1 / sep)} pc`, `${fmt(p)} pc`, `${fmt(2 / p)} pc`],
       explanation: tr('quiz.q.halfYearShift.explanation', { sep, p: fmt(p), d: fmt(1 / p) }),
     }))
   },

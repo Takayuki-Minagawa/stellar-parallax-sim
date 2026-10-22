@@ -118,17 +118,38 @@ export function makeBackgroundStars(count: number, seed: number): BgStar[] {
   })
 }
 
-/** 角丸の吹き出しラベル */
+/**
+ * 文字列が maxWidth に収まるまでフォントを縮めて ctx.font に設定する
+ * @returns 設定したフォントサイズ [px]
+ */
+export function fitFont(
+  ctx: CanvasRenderingContext2D,
+  text: string, maxWidth: number,
+  size: number, weight = '600', family = 'system-ui, sans-serif', min = 8
+): number {
+  let px = size
+  ctx.font = `${weight} ${px}px ${family}`
+  while (px > min && ctx.measureText(text).width > maxWidth) {
+    px -= 0.5
+    ctx.font = `${weight} ${px}px ${family}`
+  }
+  return px
+}
+
+/** 角丸の吹き出しラベル (bounds を渡すとその横幅の中に収める) */
 export function drawLabel(
   ctx: CanvasRenderingContext2D,
   text: string, x: number, y: number,
   color: string, bg: string,
-  align: CanvasTextAlign = 'left'
+  align: CanvasTextAlign = 'left',
+  bounds?: { min: number; max: number }
 ) {
   ctx.save()
-  ctx.font = '600 11px system-ui, sans-serif'
+  if (bounds) fitFont(ctx, text, bounds.max - bounds.min - 10, 11)
+  else ctx.font = '600 11px system-ui, sans-serif'
   const w = ctx.measureText(text).width + 10
-  const left = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x
+  let left = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x
+  if (bounds) left = Math.max(bounds.min, Math.min(bounds.max - w, left))
   ctx.fillStyle = bg
   ctx.beginPath()
   ctx.roundRect(left, y - 9, w, 18, 4)

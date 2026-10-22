@@ -5,7 +5,7 @@ import {
   distanceToParallax, formatParallax, niceStep, offsetSeparation, ABERRATION_KAPPA,
 } from '../../utils/astronomy'
 import {
-  getPalette, hexToRgba, drawGlowStar, makeBackgroundStars, readableStarColor, drawLabel,
+  getPalette, hexToRgba, drawGlowStar, makeBackgroundStars, readableStarColor, drawLabel, fitFont,
 } from '../../utils/canvas'
 import { useCanvas } from '../../hooks/useCanvas'
 import { useI18n } from '../../hooks/useI18n'
@@ -53,7 +53,7 @@ export default function ObserverView() {
     const cols = Math.min(n, usableW < 520 ? 2 : n <= 3 ? n : Math.ceil(n / 2))
     const rows = Math.ceil(n / cols)
     const top = 40
-    const bottom = 34
+    const bottom = 44
     const cw = usableW / cols
     const ch = (h - top - bottom) / rows
     const cells = stars.map((_, i) => {
@@ -83,8 +83,9 @@ export default function ObserverView() {
 
     if (stars.length === 0) return
     const { cells, scale } = layout(w, h)
+    // 空を見上げた向き (北が上・東が左) で描く
     const toXY = (cell: { cx: number; cy: number }, ap: ApparentOffset) =>
-      [cell.cx + ap.dLon * scale, cell.cy - ap.dLat * scale] as const
+      [cell.cx - ap.dLon * scale, cell.cy - ap.dLat * scale] as const
 
     stars.forEach((star, idx) => {
       const cell = cells[idx]
@@ -167,7 +168,10 @@ export default function ObserverView() {
         ctx.beginPath(); ctx.arc(qx, qy, 6, 0, Math.PI * 2); ctx.stroke()
         ctx.restore()
         const sep = offsetSeparation(curr, half)
-        drawLabel(ctx, tr('view.halfYearSep', { v: fmtArc(sep) }), (px + qx) / 2, (py + qy) / 2 - 14, '#fff', hexToRgba(pal.compare, 0.85), 'center')
+        drawLabel(
+          ctx, tr('view.halfYearSep', { v: fmtArc(sep) }), (px + qx) / 2, (py + qy) / 2 - 14,
+          '#fff', hexToRgba(pal.compare, 0.85), 'center', { min: cell.x + 4, max: cell.x + cell.w - 4 }
+        )
       }
 
       // 現在位置
@@ -177,9 +181,9 @@ export default function ObserverView() {
       ctx.save()
       ctx.textAlign = 'center'
       ctx.textBaseline = 'alphabetic'
-      ctx.font = `${isSel ? 600 : 500} 12px system-ui, sans-serif`
       ctx.fillStyle = textColor
       const name = getStarName(star, language) || tr('view.nearStar')
+      fitFont(ctx, name, cell.w - 10, 12, isSel ? '600' : '500')
       ctx.fillText(name, cell.cx, cell.y + cell.h - 18)
       ctx.font = '11px ui-monospace, monospace'
       ctx.fillStyle = pal.textMuted
@@ -202,6 +206,10 @@ export default function ObserverView() {
     ctx.font = '600 11px ui-monospace, monospace'
     ctx.textAlign = 'left'
     ctx.fillText(fmtArc(barArc), bx + barPx + 6, by)
+    // 方位 (天球を見上げた向き)
+    ctx.fillStyle = pal.textMuted
+    ctx.font = '10px system-ui, sans-serif'
+    ctx.fillText(tr('view.compass'), bx, by - 14)
     ctx.restore()
 
     // ─── 年周光行差との比較 (インセット) ────────────────────
@@ -221,16 +229,19 @@ export default function ObserverView() {
       ctx.stroke()
 
       ctx.fillStyle = pal.aberration
-      ctx.font = '600 11px system-ui, sans-serif'
       ctx.textAlign = 'center'
-      ctx.fillText(tr('view.aberInsetTitle'), icx, iy + 15)
+      fitFont(ctx, tr('view.aberInsetTitle'), size - 12, 11)
+      ctx.fillText(tr('view.aberInsetTitle'), icx, iy + 14)
+      ctx.fillStyle = pal.textMuted
+      fitFont(ctx, tr('view.aberInsetSub'), size - 12, 9.5, '400')
+      ctx.fillText(tr('view.aberInsetSub'), icx, iy + 26)
 
       // 視差 (正規化)
       const pSel = distanceToParallax(selected.distancePc)
       const selIdx = stars.findIndex(s => s.id === selected.id)
       ctx.beginPath()
       trails[selIdx].forEach((ap, i) => {
-        const x = icx + (ap.dLon / pSel) * R
+        const x = icx - (ap.dLon / pSel) * R
         const y = icy - (ap.dLat / pSel) * R
         if (i === 0) ctx.moveTo(x, y)
         else ctx.lineTo(x, y)
@@ -241,7 +252,7 @@ export default function ObserverView() {
       // 光行差 (正規化)
       ctx.beginPath()
       aberTrail.forEach((ap, i) => {
-        const x = icx + (ap.dLon / ABERRATION_KAPPA) * R
+        const x = icx - (ap.dLon / ABERRATION_KAPPA) * R
         const y = icy - (ap.dLat / ABERRATION_KAPPA) * R
         if (i === 0) ctx.moveTo(x, y)
         else ctx.lineTo(x, y)
@@ -256,18 +267,21 @@ export default function ObserverView() {
       ctx.strokeStyle = pal.axis
       ctx.lineWidth = 1
       ctx.beginPath()
-      ctx.moveTo(icx, icy); ctx.lineTo(icx + (cp.dLon / pSel) * R, icy - (cp.dLat / pSel) * R)
-      ctx.moveTo(icx, icy); ctx.lineTo(icx + (ca.dLon / ABERRATION_KAPPA) * R, icy - (ca.dLat / ABERRATION_KAPPA) * R)
+      ctx.moveTo(icx, icy); ctx.lineTo(icx - (cp.dLon / pSel) * R, icy - (cp.dLat / pSel) * R)
+      ctx.moveTo(icx, icy); ctx.lineTo(icx - (ca.dLon / ABERRATION_KAPPA) * R, icy - (ca.dLat / ABERRATION_KAPPA) * R)
       ctx.stroke()
-      drawGlowStar(ctx, icx + (cp.dLon / pSel) * R, icy - (cp.dLat / pSel) * R, readableStarColor(selected.color, theme), 4)
-      drawGlowStar(ctx, icx + (ca.dLon / ABERRATION_KAPPA) * R, icy - (ca.dLat / ABERRATION_KAPPA) * R, '#fb923c', 4)
+      drawGlowStar(ctx, icx - (cp.dLon / pSel) * R, icy - (cp.dLat / pSel) * R, readableStarColor(selected.color, theme), 4)
+      drawGlowStar(ctx, icx - (ca.dLon / ABERRATION_KAPPA) * R, icy - (ca.dLat / ABERRATION_KAPPA) * R, '#fb923c', 4)
 
-      ctx.font = '10px system-ui, sans-serif'
       ctx.textAlign = 'left'
+      const parText = `● ${tr('view.parallaxShort')} ${formatParallax(pSel)}`
+      const abText = `● ${tr('view.aberrationShort')} ${ABERRATION_KAPPA.toFixed(1)}″`
       ctx.fillStyle = readableStarColor(selected.color, theme)
-      ctx.fillText(`● ${tr('view.parallaxShort')} ${formatParallax(pSel)}`, ix + 8, iy + size + 8)
+      fitFont(ctx, parText, size - 14, 10, '400')
+      ctx.fillText(parText, ix + 8, iy + size + 8)
       ctx.fillStyle = pal.aberration
-      ctx.fillText(`● ${tr('view.aberrationShort')} ${ABERRATION_KAPPA.toFixed(1)}″`, ix + 8, iy + size + 22)
+      fitFont(ctx, abText, size - 14, 10, '400')
+      ctx.fillText(abText, ix + 8, iy + size + 22)
       ctx.restore()
     }
   }, [], true)

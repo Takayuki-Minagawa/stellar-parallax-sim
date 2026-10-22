@@ -58,9 +58,9 @@ export default function ChallengeTab() {
     drawFrame(ctx, pal, area, {
       w, h,
       yLabelX: Math.max(11, area.left - 36),
-      xTicks: ticks.map(v => ({ pos: cx + v * scale, label: v === 0 || Math.abs(v) === range ? formatTick(v, step) : '', major: v === 0 })),
+      xTicks: ticks.map(v => ({ pos: cx - v * scale, label: v === 0 || Math.abs(v) === range ? formatTick(v, step) : '', major: v === 0 })),
       yTicks: ticks.map(v => ({ pos: cy - v * scale, label: formatTick(v, step), major: v === 0 })),
-      xLabel: '″',
+      xLabel: tr('graph.xEastLeft'),
       yLabel: '″',
     })
     // 細かい目盛り (x 軸上)
@@ -76,7 +76,7 @@ export default function ChallengeTab() {
 
     ctx.beginPath()
     trail.forEach((ap, i) => {
-      const x = cx + ap.dLon * scale
+      const x = cx - ap.dLon * scale
       const y = cy - ap.dLat * scale
       if (i === 0) ctx.moveTo(x, y)
       else ctx.lineTo(x, y)
@@ -86,7 +86,7 @@ export default function ChallengeTab() {
     ctx.stroke()
     for (let m = 0; m < 12; m++) {
       const ap = getApparentOffset(star, (m / 12) * 360)
-      const x = cx + ap.dLon * scale
+      const x = cx - ap.dLon * scale
       const y = cy - ap.dLat * scale
       drawGlowStar(ctx, x, y, color, 2.6)
       const ox = x - cx

@@ -1,7 +1,7 @@
 import { useMemo, useRef, type PointerEvent } from 'react'
 import { useSimStore, useSelectedStar } from '../../store/simulationStore'
 import {
-  getApparentOffset, getAberration, distanceToParallax, niceStep, formatTick,
+  getApparentOffset, getAberration, distanceToParallax, niceStep, formatTick, angleAxisUnit,
   monthToAngle, ABERRATION_KAPPA,
 } from '../../utils/astronomy'
 import { getPalette, hexToRgba, readableStarColor } from '../../utils/canvas'
@@ -39,6 +39,7 @@ export default function TimePlot() {
     const p = distanceToParallax(star.distancePc)
     const maxY = p * 1.25
     const step = niceStep(maxY / 2)
+    const { factor, unit } = angleAxisUnit(maxY)
     const xOf = (a: number) => area.left + (a / 360) * area.width
     const yOf = (v: number) => area.top + area.height / 2 - (v / maxY) * (area.height / 2)
     const yAb = (v: number) => area.top + area.height / 2 - (v / (ABERRATION_KAPPA * 1.25)) * (area.height / 2)
@@ -46,9 +47,9 @@ export default function TimePlot() {
     drawFrame(ctx, pal, area, {
       w, h,
       xTicks: Array.from({ length: 12 }, (_, m) => ({ pos: xOf(monthToAngle(m)), label: months[m] ?? '' })),
-      yTicks: symmetricTicks(maxY, step).map(v => ({ pos: yOf(v), label: formatTick(v, step), major: v === 0 })),
+      yTicks: symmetricTicks(maxY, step).map(v => ({ pos: yOf(v), label: formatTick(v * factor, step * factor), major: v === 0 })),
       xLabel: '',
-      yLabel: tr('graph.yTime'),
+      yLabel: tr('graph.yTime', { unit }),
     })
 
     const line = (pick: (s: typeof series[number]) => number, y: (v: number) => number, color: string, width: number, dash: number[] = []) => {

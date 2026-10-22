@@ -3,6 +3,8 @@ import type { Star, ViewMode, DistanceUnit, Theme, Language, CameraPreset, Missi
 import { STAR_PRESETS, DEFAULT_STAR_ID, DEFAULT_CUSTOM_STAR } from '../data/starPresets'
 
 const PROGRESS_KEY = 'sps-progress-v1'
+/** 初回ガイドを一度閉じたかどうか */
+export const WELCOME_KEY = 'sps-welcome-seen'
 
 let idCounter = 0
 /** ストア内で一意な恒星 id を発行 */
@@ -165,7 +167,13 @@ export const useSimStore = create<SimState>((set, get) => ({
 
   setTheme: (theme) => set({ theme }),
   setLanguage: (language) => set({ language }),
-  setHelpOpen: (helpOpen) => set({ helpOpen }),
+  setHelpOpen: (helpOpen) => {
+    // ✕ ボタン・Esc・? キーなど、どの方法で閉じても次回は自動表示しない
+    if (!helpOpen) {
+      try { localStorage.setItem(WELCOME_KEY, '1') } catch { /* storage unavailable */ }
+    }
+    set({ helpOpen })
+  },
   markMission: (id) => {
     if (get().progress[id]) return
     const progress = { ...get().progress, [id]: true }

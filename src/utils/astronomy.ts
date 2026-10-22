@@ -59,7 +59,8 @@ export function getEarthPosition(angleDeg: number): EarthPosition {
 /** 公転角度 [deg] → おおよその日付 (month: 0-based) */
 export function angleToDate(angleDeg: number): { month: number; day: number } {
   const a = ((angleDeg % 360) + 360) % 360
-  let dayOfYear = Math.floor((a / 360) * 365)
+  // monthToAngle で求めた月初の角度が浮動小数点誤差で前日にならないよう補正
+  let dayOfYear = Math.floor((a / 360) * 365 + 1e-6)
   let month = 0
   while (month < 11 && dayOfYear >= DAYS_IN_MONTH[month]) {
     dayOfYear -= DAYS_IN_MONTH[month]
@@ -73,6 +74,16 @@ export function monthToAngle(month: number): number {
   let days = 0
   for (let i = 0; i < month; i++) days += DAYS_IN_MONTH[i]
   return (days / 365) * 360
+}
+
+/**
+ * 1 か月送り / 戻し (実際の月の長さに合わせて月初へ移動)
+ * 戻すときは、月の途中なら今月の月初、月初ならその前の月の月初へ
+ */
+export function stepMonth(angleDeg: number, dir: 1 | -1): number {
+  const { month, day } = angleToDate(angleDeg)
+  if (dir > 0) return monthToAngle((month + 1) % 12)
+  return monthToAngle(day > 1 ? month : (month + 11) % 12)
 }
 
 // ─── 視差 ─────────────────────────────────────────────────────────────────────
@@ -194,6 +205,13 @@ export function formatParallax(arcsec: number): string {
 export function formatSignedArcsec(arcsec: number, digits = 3): string {
   const v = Math.abs(arcsec) < 0.5 * 10 ** -digits ? 0 : arcsec
   return `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(digits)}″`
+}
+
+/**
+ * グラフの角度目盛りの単位: 0.01″ 未満の範囲は mas (ミリ秒角) で表示して桁を減らす
+ */
+export function angleAxisUnit(maxArcsec: number): { factor: number; unit: '″' | 'mas' } {
+  return maxArcsec < 0.01 ? { factor: 1000, unit: 'mas' } : { factor: 1, unit: '″' }
 }
 
 /** 目盛り間隔を 1-2-5 系列から選ぶ */

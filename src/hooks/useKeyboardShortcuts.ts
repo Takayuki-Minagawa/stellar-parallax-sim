@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
 import { useSimStore } from '../store/simulationStore'
+import { stepMonth } from '../utils/astronomy'
 
-/** 1 か月ぶんの公転角度 [deg] */
-const MONTH_DEG = 360 / 12
+/** Space / Enter で自分自身を操作する要素 (ショートカットで横取りしない) */
+const INTERACTIVE_ROLES = new Set(['button', 'tab', 'checkbox', 'switch', 'link', 'option', 'menuitem', 'radio'])
 
 /**
  * キーボードショートカット
@@ -12,30 +13,33 @@ const MONTH_DEG = 360 / 12
 export function useKeyboardShortcuts() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey || e.altKey) return
+      if (e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return
       const target = e.target as HTMLElement | null
       const tag = target?.tagName
       if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || target?.isContentEditable) return
+      const interactive =
+        tag === 'BUTTON' || tag === 'SUMMARY' || tag === 'A' ||
+        INTERACTIVE_ROLES.has(target?.getAttribute('role') ?? '')
 
       const s = useSimStore.getState()
       if (s.helpOpen && e.key !== 'Escape' && e.key !== '?') return
 
       switch (e.key) {
         case ' ':
-          // ボタンにフォーカスがあるときはブラウザ標準のクリックに任せる
-          if (tag === 'BUTTON') return
+          // ボタン・折りたたみ見出しなどにフォーカスがあるときは標準動作に任せる
+          if (interactive) return
           e.preventDefault()
           s.setPlaying(!s.playing)
           break
         case 'ArrowRight':
           e.preventDefault()
           s.setPlaying(false)
-          s.setEarthAngle(Math.round((s.earthAngleDeg + MONTH_DEG) / MONTH_DEG) * MONTH_DEG)
+          s.setEarthAngle(stepMonth(s.earthAngleDeg, 1))
           break
         case 'ArrowLeft':
           e.preventDefault()
           s.setPlaying(false)
-          s.setEarthAngle(Math.round((s.earthAngleDeg - MONTH_DEG) / MONTH_DEG) * MONTH_DEG)
+          s.setEarthAngle(stepMonth(s.earthAngleDeg, -1))
           break
         case '1': s.setViewMode('overhead'); break
         case '2': s.setViewMode('observer'); break

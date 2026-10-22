@@ -1,9 +1,8 @@
 import { useSimStore } from '../../store/simulationStore'
 import { useI18n } from '../../hooks/useI18n'
-import { angleToDate, monthToAngle } from '../../utils/astronomy'
+import { angleToDate, monthToAngle, stepMonth } from '../../utils/astronomy'
 
 const SPEED_OPTIONS = [1, 3, 6, 12, 30, 60]
-const MONTH_DEG = 360 / 12
 
 /** ビュー直下の再生・時刻コントロール */
 export default function TimelineBar() {
@@ -21,7 +20,7 @@ export default function TimelineBar() {
 
   const step = (dir: 1 | -1) => {
     setPlaying(false)
-    setEarthAngle(Math.round((earthAngleDeg + dir * MONTH_DEG) / MONTH_DEG) * MONTH_DEG)
+    setEarthAngle(stepMonth(earthAngleDeg, dir))
   }
 
   return (

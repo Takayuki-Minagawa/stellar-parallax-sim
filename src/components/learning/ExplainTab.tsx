@@ -92,7 +92,7 @@ function NowCard() {
 
   const tips: string[] = [tr(`explain.view.${viewMode}`)]
   if (star.distancePc < 3) tips.push(tr('explain.tipNear'))
-  else if (star.distancePc > 50) tips.push(tr('explain.tipFar'))
+  else if (star.distancePc > 100) tips.push(tr('explain.tipFar'))
   if (compareMode) tips.push(tr('explain.tipCompare', { m1: months[Math.min(m1, m2)], m2: months[Math.max(m1, m2)], v: formatParallax(2 * p) }))
   else tips.push(tr('explain.tipTryCompare'))
   if (stars.length === 1) tips.push(tr('explain.tipAddStar'))

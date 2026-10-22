@@ -93,6 +93,34 @@ function serialize(s: Star): string {
   ].join(':')
 }
 
+type SimSnapshot = ReturnType<typeof useSimStore.getState>
+
+/**
+ * 現在の状態を URL クエリ文字列にする
+ * @param withAngle 日付 (公転角度) を含めるか
+ */
+export function buildSearch(s: SimSnapshot, withAngle: boolean): string {
+  const params = new URLSearchParams()
+  params.set('v', '2')
+  params.set('lang', s.language)
+  params.set('theme', s.theme)
+  params.set('view', s.viewMode)
+  if (s.distanceUnit !== 'pc') params.set('unit', s.distanceUnit)
+  if (withAngle) params.set('a', String(Math.round(s.earthAngleDeg)))
+  if (s.compareMode) params.set('cmp', '1')
+  if (s.showAberration) params.set('ab', '1')
+  params.set('stars', s.stars.map(serialize).join(','))
+  const sel = s.stars.findIndex(st => st.id === s.selectedStarId)
+  if (sel > 0) params.set('sel', String(sel))
+  return `?${params.toString()}`
+}
+
+/** 共有用: 現在の状態 (再生中でも最新) を表す URL */
+export function currentShareUrl(): string {
+  const { origin, pathname } = window.location
+  return `${origin}${pathname}${buildSearch(useSimStore.getState(), true)}`
+}
+
 export function useUrlSync() {
   const mounted = useRef(false)
 
@@ -104,8 +132,7 @@ export function useUrlSync() {
   const compareMode = useSimStore(s => s.compareMode)
   const showAberration = useSimStore(s => s.showAberration)
   const distanceUnit = useSimStore(s => s.distanceUnit)
-  const playing = useSimStore(s => s.playing)
-  // 再生中は URL を書き換えず、停止したときの位置を反映する
+  // 再生中は毎フレーム URL を書き換えないよう、停止中の位置だけを反映する
   const angle = useSimStore(s => (s.playing ? -1 : Math.round(s.earthAngleDeg)))
 
   // ── マウント時にURLから復元 ────────────────────────────────────────────────
@@ -147,24 +174,10 @@ export function useUrlSync() {
 
   // ── 状態変化時にURLを更新 (replaceState で履歴を汚さない) ─────────────────
   useEffect(() => {
-    if (!mounted.current || playing) return
-
-    const params = new URLSearchParams()
-    params.set('v', '2')
-    params.set('lang', language)
-    params.set('theme', theme)
-    params.set('view', viewMode)
-    if (distanceUnit !== 'pc') params.set('unit', distanceUnit)
-    if (angle >= 0) params.set('a', String(angle))
-    if (compareMode) params.set('cmp', '1')
-    if (showAberration) params.set('ab', '1')
-    params.set('stars', stars.map(serialize).join(','))
-    const sel = stars.findIndex(s => s.id === selectedStarId)
-    if (sel > 0) params.set('sel', String(sel))
-
-    const newSearch = `?${params.toString()}`
+    if (!mounted.current) return
+    const newSearch = buildSearch(useSimStore.getState(), angle >= 0)
     if (window.location.search !== newSearch) {
       window.history.replaceState(null, '', newSearch)
     }
-  }, [language, theme, viewMode, stars, selectedStarId, compareMode, showAberration, distanceUnit, angle, playing])
+  }, [language, theme, viewMode, stars, selectedStarId, compareMode, showAberration, distanceUnit, angle])
 }

@@ -87,13 +87,15 @@
     "parallaxP": "p",
     "apparentPos": "見かけの位置",
     "halfYearSep": "半年のずれ {{v}}",
-    "aberInsetTitle": "形と時期の比較（大きさは正規化）",
+    "aberInsetTitle": "形と時期の比較",
     "parallaxShort": "視差",
     "aberrationShort": "光行差",
     "lookingFromStar": "{{name}} から見た太陽系",
     "stellarDistance": "距離 {{d}}（{{au}}）",
     "stellarMax": "最大 = p = {{p}}",
-    "stellarNow": "いま {{v}}"
+    "stellarNow": "いま {{v}}",
+    "aberInsetSub": "大きさは正規化",
+    "compass": "← 東　北 ↑　西 →"
   },
   "controls": {
     "tabStars": "恒星",
@@ -143,9 +145,9 @@
     "tabPath": "見かけの軌跡",
     "tabTime": "時系列",
     "tabCurve": "視差と距離",
-    "xLon": "黄経方向のずれ [″]",
-    "yLat": "黄緯方向 [″]",
-    "yTime": "ずれ [″]",
+    "xLon": "黄経方向のずれ [{{unit}}]（左が東）",
+    "yLat": "黄緯方向 [{{unit}}]",
+    "yTime": "ずれ [{{unit}}]",
     "seriesLon": "黄経方向",
     "seriesLat": "黄緯方向",
     "seriesAber": "光行差（右軸）",
@@ -156,7 +158,8 @@
     "distAxis": "距離 d [pc]",
     "parAxis": "視差角 p [″]",
     "limitLabel": "{{name}}の限界（〜{{d}} pc）",
-    "farHidden": "遠い恒星は「対数」で表示"
+    "farHidden": "遠い恒星は「対数」で表示",
+    "xEastLeft": "″（左が東）"
   },
   "info": {
     "distance": "距離",

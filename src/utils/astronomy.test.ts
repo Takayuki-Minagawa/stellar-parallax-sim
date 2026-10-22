@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   getApparentOffset, getAberration, computeTrail, distanceToParallax, parallaxToDistance,
-  maxShiftAngleDeg, offsetSeparation, angleToDate, monthToAngle, formatParallax, niceStep,
+  maxShiftAngleDeg, offsetSeparation, angleToDate, monthToAngle, stepMonth, formatParallax, niceStep,
   simplestDetector, ABERRATION_KAPPA,
 } from './astronomy'
 import type { Star } from '../types'
@@ -62,6 +62,24 @@ describe('calendar', () => {
     expect(angleToDate(monthToAngle(6)).month).toBe(6)
     expect(angleToDate(359.9).month).toBe(11)
     expect(angleToDate(-1).month).toBe(11)
+  })
+
+  it('month starts map back to day 1 of the same month', () => {
+    for (let m = 0; m < 12; m++) expect(angleToDate(monthToAngle(m))).toEqual({ month: m, day: 1 })
+  })
+
+  it('stepMonth visits every month (including February) in order', () => {
+    let a = 0
+    const seen: number[] = []
+    for (let i = 0; i < 12; i++) {
+      a = stepMonth(a, 1)
+      seen.push(angleToDate(a).month)
+    }
+    expect(seen).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0])
+    // 戻す: 月の途中なら今月の 1 日、1 日ならその前の月の 1 日
+    expect(angleToDate(stepMonth(monthToAngle(2) + 5, -1))).toEqual({ month: 2, day: 1 })
+    expect(angleToDate(stepMonth(monthToAngle(2), -1))).toEqual({ month: 1, day: 1 })
+    expect(angleToDate(stepMonth(0, -1))).toEqual({ month: 11, day: 1 })
   })
 })
 

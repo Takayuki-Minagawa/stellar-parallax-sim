@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTheme } from '../../hooks/useTheme'
 import { useSimStore } from '../../store/simulationStore'
 import { useI18n } from '../../hooks/useI18n'
+import { currentShareUrl } from '../../hooks/useUrlSync'
 import type { Language } from '../../types'
 
 const iconBtn =
@@ -25,7 +26,7 @@ export default function Header() {
   const doneCount = Object.values(progress).filter(Boolean).length
 
   const handleShare = async () => {
-    const url = window.location.href
+    const url = currentShareUrl()
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
