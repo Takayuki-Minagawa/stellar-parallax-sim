@@ -65,7 +65,11 @@ describe('calendar', () => {
   })
 
   it('month starts map back to day 1 of the same month', () => {
-    for (let m = 0; m < 12; m++) expect(angleToDate(monthToAngle(m))).toEqual({ month: m, day: 1 })
+    for (let m = 0; m < 12; m++) {
+      expect(angleToDate(monthToAngle(m))).toEqual({ month: m, day: 1 })
+      // 共有 URL では小数 2 桁に丸めて保存される
+      expect(angleToDate(+monthToAngle(m).toFixed(2))).toEqual({ month: m, day: 1 })
+    }
   })
 
   it('stepMonth visits every month (including February) in order', () => {

@@ -117,9 +117,10 @@ function DynamicLine({ compute, color, lineWidth = 1, opacity = 1 }: {
   // 初期頂点はマウント時に一度だけ作る (以降は useFrame で書き換え)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const initial = useMemo(() => compute(currentAngle()), [])
+  // 負の優先度: 描画や子の Html より先に頂点を更新する
   useFrame(() => {
     if (ref.current) writeLinePoints(ref.current, compute(currentAngle()))
-  })
+  }, -1)
   return (
     <Line
       ref={ref}
@@ -139,9 +140,10 @@ function FollowGroup({ position, children }: {
   children: ReactNode
 }) {
   const ref = useRef<THREE.Group>(null)
+  // 負の優先度: 子の Html ラベルが位置を計算する前に動かす (1 フレーム遅れ防止)
   useFrame(() => {
     ref.current?.position.copy(position(currentAngle()))
-  })
+  }, -1)
   return <group ref={ref} position={position(currentAngle())}>{children}</group>
 }
 

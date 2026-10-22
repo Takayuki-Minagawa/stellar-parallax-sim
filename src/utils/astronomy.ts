@@ -59,8 +59,9 @@ export function getEarthPosition(angleDeg: number): EarthPosition {
 /** 公転角度 [deg] → おおよその日付 (month: 0-based) */
 export function angleToDate(angleDeg: number): { month: number; day: number } {
   const a = ((angleDeg % 360) + 360) % 360
-  // monthToAngle で求めた月初の角度が浮動小数点誤差で前日にならないよう補正
-  let dayOfYear = Math.floor((a / 360) * 365 + 1e-6)
+  // 月初の角度 (monthToAngle) が浮動小数点誤差や URL 保存時の丸め (小数 2 桁 ≈ 0.005 日)
+  // で前日にならないよう 0.01 日 (約 14 分) の余裕をもたせる
+  let dayOfYear = Math.floor((a / 360) * 365 + 0.01)
   let month = 0
   while (month < 11 && dayOfYear >= DAYS_IN_MONTH[month]) {
     dayOfYear -= DAYS_IN_MONTH[month]

@@ -106,7 +106,8 @@ export function buildSearch(s: SimSnapshot, withAngle: boolean): string {
   params.set('theme', s.theme)
   params.set('view', s.viewMode)
   if (s.distanceUnit !== 'pc') params.set('unit', s.distanceUnit)
-  if (withAngle) params.set('a', String(Math.round(s.earthAngleDeg)))
+  // 月初 (stepMonth の結果) が丸めで前日にならないよう小数 2 桁で保存
+  if (withAngle) params.set('a', String(+s.earthAngleDeg.toFixed(2)))
   if (s.compareMode) params.set('cmp', '1')
   if (s.showAberration) params.set('ab', '1')
   params.set('stars', s.stars.map(serialize).join(','))
@@ -133,7 +134,7 @@ export function useUrlSync() {
   const showAberration = useSimStore(s => s.showAberration)
   const distanceUnit = useSimStore(s => s.distanceUnit)
   // 再生中は毎フレーム URL を書き換えないよう、停止中の位置だけを反映する
-  const angle = useSimStore(s => (s.playing ? -1 : Math.round(s.earthAngleDeg)))
+  const angle = useSimStore(s => (s.playing ? -1 : +s.earthAngleDeg.toFixed(2)))
 
   // ── マウント時にURLから復元 ────────────────────────────────────────────────
   useEffect(() => {

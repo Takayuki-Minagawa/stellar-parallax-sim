@@ -168,8 +168,10 @@ export default function ObserverView() {
         ctx.beginPath(); ctx.arc(qx, qy, 6, 0, Math.PI * 2); ctx.stroke()
         ctx.restore()
         const sep = offsetSeparation(curr, half)
+        // ラベルは軌跡の上側に置き、恒星や軌跡に重ならないようにする
+        const labelY = Math.max(cell.y + 12, cell.cy - p * scale - 16)
         drawLabel(
-          ctx, tr('view.halfYearSep', { v: fmtArc(sep) }), (px + qx) / 2, (py + qy) / 2 - 14,
+          ctx, tr('view.halfYearSep', { v: fmtArc(sep) }), cell.cx, labelY,
           '#fff', hexToRgba(pal.compare, 0.85), 'center', { min: cell.x + 4, max: cell.x + cell.w - 4 }
         )
       }
