@@ -2,7 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* テーマトークン (RGB 3 値) — tailwind.config.js の colors から参照 */
 :root {
+  --c-app: 236 241 249;
+  --c-panel: 255 255 255;
+  --c-card: 244 247 252;
+  --c-hover: 228 234 244;
+  --c-line: 211 220 234;
+  --c-fg: 15 23 42;
+  --c-muted: 71 85 105;
+  --c-subtle: 120 134 156;
+  --c-accent: 37 99 235;
+  --c-accent-strong: 37 99 235;
+  color-scheme: light;
+}
+
+.dark {
+  --c-app: 4 8 17;
+  --c-panel: 10 16 30;
+  --c-card: 17 26 46;
+  --c-hover: 28 40 66;
+  --c-line: 34 48 78;
+  --c-fg: 226 232 245;
+  --c-muted: 148 163 190;
+  --c-subtle: 96 112 140;
+  --c-accent: 96 165 250;
+  --c-accent-strong: 37 99 235;
   color-scheme: dark;
 }
 
@@ -13,27 +38,30 @@ html, body, #root {
   overflow: hidden;
 }
 
+body {
+  @apply bg-app text-fg font-sans antialiased;
+}
+
 * {
   box-sizing: border-box;
 }
 
 /* カスタムスクロールバー */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334455;
+  background: rgb(var(--c-line));
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #445566;
+  background: rgb(var(--c-subtle));
 }
 
-/* Three.js canvas */
 canvas {
   outline: none;
 }
@@ -41,4 +69,58 @@ canvas {
 /* range input */
 input[type="range"] {
   cursor: pointer;
+  accent-color: rgb(var(--c-accent));
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--c-accent));
+  outline-offset: 2px;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md text-xs font-medium transition-colors
+           disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-accent-strong text-white hover:brightness-110;
+  }
+  .btn-ghost {
+    @apply btn bg-card text-muted border border-line hover:bg-hover hover:text-fg;
+  }
+  .chip {
+    @apply px-2 py-1 rounded-md text-xs transition-colors border;
+  }
+  .chip-on {
+    @apply chip bg-accent-strong text-white border-transparent;
+  }
+  .chip-off {
+    @apply chip bg-card text-muted border-line hover:bg-hover hover:text-fg;
+  }
+  .card {
+    @apply rounded-lg bg-card border border-line;
+  }
+  .section-title {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-subtle;
+  }
+  .field {
+    @apply bg-panel border border-line rounded-md px-2 py-1.5 text-xs text-fg focus:border-accent outline-none;
+  }
+  .tab {
+    @apply flex-1 py-2 text-xs font-medium transition-colors border-b-2 whitespace-nowrap;
+  }
+  .tab-on {
+    @apply tab text-accent border-accent;
+  }
+  .tab-off {
+    @apply tab text-subtle border-transparent hover:text-fg;
+  }
+  .kbd {
+    @apply inline-block min-w-[1.5em] px-1 py-0.5 rounded border border-line bg-card text-[10px] font-mono text-center text-muted;
+  }
+  /* 3D ビュー上のラベル */
+  .scene-label {
+    @apply text-[11px] font-semibold whitespace-nowrap pointer-events-none select-none;
+    text-shadow: 0 0 4px #000, 0 0 2px #000;
+  }
 }

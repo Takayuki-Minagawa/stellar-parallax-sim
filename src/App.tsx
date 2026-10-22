@@ -1,63 +1,90 @@
-import { Suspense } from 'react'
+import { useState } from 'react'
 import Header from './components/layout/Header'
+import HelpModal from './components/layout/HelpModal'
 import ControlPanel from './components/controls/ControlPanel'
-import OverheadView from './components/views/OverheadView'
-import ObserverView from './components/views/ObserverView'
-import StellarView from './components/views/StellarView'
+import TimelineBar from './components/controls/TimelineBar'
+import ViewArea from './components/views/ViewArea'
 import GraphPanel from './components/graphs/GraphPanel'
 import LearningPanel from './components/learning/LearningPanel'
-import { useSimStore } from './store/simulationStore'
 import { useTheme } from './hooks/useTheme'
 import { useUrlSync } from './hooks/useUrlSync'
-
-function ViewArea() {
-  const viewMode = useSimStore(s => s.viewMode)
-  return (
-    <div className="w-full h-full">
-      {viewMode === 'overhead' && (
-        <Suspense fallback={<div className="w-full h-full flex items-center justify-center text-gray-400">読み込み中...</div>}>
-          <OverheadView />
-        </Suspense>
-      )}
-      {viewMode === 'observer' && <ObserverView />}
-      {viewMode === 'stellar' && <StellarView />}
-    </div>
-  )
-}
+import { useAnimationLoop } from './hooks/useAnimationLoop'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { useMissionTracker } from './hooks/useMissionTracker'
+import { useMediaQuery } from './hooks/useMediaQuery'
+import { useI18n } from './hooks/useI18n'
 
 export default function App() {
   useTheme()
   useUrlSync()
+  useAnimationLoop()
+  useKeyboardShortcuts()
+  useMissionTracker()
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   return (
-    <div className="h-screen flex flex-col bg-gray-950 text-gray-100 overflow-hidden">
+    <div className="h-full flex flex-col bg-app text-fg overflow-hidden">
       <Header />
+      {isDesktop ? <DesktopLayout /> : <MobileLayout />}
+      <HelpModal />
+    </div>
+  )
+}
 
-      {/* メインレイアウト */}
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
+function DesktopLayout() {
+  return (
+    <div className="flex-1 min-h-0 flex">
+      <aside className="w-64 xl:w-72 shrink-0 border-r border-line flex flex-col overflow-hidden">
+        <ControlPanel />
+      </aside>
 
-        {/* 左: 操作パネル */}
-        <aside className="lg:w-56 xl:w-64 shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700 flex flex-col max-h-48 lg:max-h-none overflow-hidden">
-          <ControlPanel />
-        </aside>
+      <main className="flex-1 min-w-0 min-h-0 flex flex-col">
+        <div className="flex-[3] min-h-0">
+          <ViewArea />
+        </div>
+        <TimelineBar />
+        <div className="flex-[2] min-h-0 border-t border-line">
+          <GraphPanel />
+        </div>
+      </main>
 
-        {/* 中央: ビュー */}
-        <main className="flex-1 min-w-0 min-h-0 flex flex-col">
-          {/* 可視化ビュー (上3分の2) */}
-          <div className="flex-[3] min-h-0">
-            <ViewArea />
-          </div>
+      <aside className="w-80 xl:w-[22rem] shrink-0 border-l border-line flex flex-col overflow-hidden">
+        <LearningPanel />
+      </aside>
+    </div>
+  )
+}
 
-          {/* グラフパネル (下3分の1) */}
-          <div className="flex-[2] min-h-0 border-t border-gray-700 max-h-56 lg:max-h-none">
-            <GraphPanel />
-          </div>
-        </main>
+type MobileTab = 'controls' | 'graph' | 'learn'
 
-        {/* 右: 学習パネル */}
-        <aside className="lg:w-64 xl:w-72 shrink-0 border-t lg:border-t-0 lg:border-l border-gray-700 flex flex-col max-h-64 lg:max-h-none overflow-hidden">
-          <LearningPanel />
-        </aside>
+/** スマホ・タブレット: ビュー + タイムライン + 切替式の下部パネル */
+function MobileLayout() {
+  const { tr } = useI18n()
+  const [tab, setTab] = useState<MobileTab>('learn')
+
+  return (
+    <div className="flex-1 min-h-0 flex flex-col">
+      <div className="h-[42vh] min-h-[220px] shrink-0">
+        <ViewArea />
+      </div>
+      <TimelineBar />
+      <div className="flex border-y border-line bg-panel shrink-0" role="tablist">
+        {(['controls', 'graph', 'learn'] as const).map(t => (
+          <button
+            key={t}
+            role="tab"
+            aria-selected={tab === t}
+            onClick={() => setTab(t)}
+            className={tab === t ? 'tab-on' : 'tab-off'}
+          >
+            {tr(`mobile.${t}`)}
+          </button>
+        ))}
+      </div>
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {tab === 'controls' && <ControlPanel />}
+        {tab === 'graph' && <GraphPanel />}
+        {tab === 'learn' && <LearningPanel />}
       </div>
     </div>
   )

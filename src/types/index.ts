@@ -2,15 +2,24 @@
 
 export interface Star {
   id: string
+  /** プリセット由来の場合の元 id (URL 共有・説明文の表示に使用) */
+  presetId?: string
   name: string
   nameEn: string
-  /** 距離 [pc] */
+  /** 距離 [pc] — 視差角は常に p = 1/d で導出する */
   distancePc: number
-  /** 実際の視差角 [arcsec] */
-  parallaxArcsec: number
-  /** 赤道座標系での方向角 [rad] — 俯瞰ビューで恒星を置く方向 */
-  directionRad: number
+  /** 黄経 λ [deg] — 黄道面内の方向 */
+  eclLonDeg: number
+  /** 黄緯 β [deg] — 黄道面からの傾き (±90° = 黄道の極) */
+  eclLatDeg: number
   color: string
+}
+
+/** プリセット恒星 (実測値ベース) */
+export interface StarPreset extends Omit<Star, 'id' | 'presetId'> {
+  id: string
+  /** 一言メモ (ロケールキー) */
+  noteKey?: string
 }
 
 // ─── シミュレーション状態 ─────────────────────────────────────────────────────
@@ -19,56 +28,50 @@ export type ViewMode = 'overhead' | 'observer' | 'stellar'
 export type DistanceUnit = 'pc' | 'ly' | 'au'
 export type Theme = 'light' | 'dark'
 export type Language = 'ja' | 'en'
+export type CameraPreset = 'oblique' | 'top' | 'edge'
 
-export interface PlaybackState {
-  playing: boolean
-  /** 1x〜60x */
-  speed: number
-}
+export type MissionId =
+  | 'playYear'
+  | 'observer'
+  | 'compare'
+  | 'distance'
+  | 'multi'
+  | 'pole'
+  | 'ecliptic'
+  | 'stellar'
+  | 'aberration'
+  | 'graphClick'
+  | 'challenge'
+  | 'quiz'
 
 // ─── 計算結果 ────────────────────────────────────────────────────────────────
 
-export interface EarthPosition {
-  /** 公転角度 [rad]  0 = 1月1日頃 */
-  angle: number
+export interface Vec3 {
   x: number
+  y: number
   z: number
 }
 
-/** 地球視点での恒星の見かけ方向 (正規化済み) */
-export interface ApparentDirection {
-  /** 水平方向ずれ [arcsec] */
-  deltaRA: number
-  /** 垂直方向ずれ [arcsec] */
-  deltaDec: number
+/** 地球位置 (黄道座標系, 1 au 単位, z = 黄道北極方向) */
+export interface EarthPosition extends Vec3 {
+  /** 日心黄経 [rad] */
+  lon: number
 }
 
-export interface ParallaxResult {
-  star: Star
-  /** 現在の見かけ方向 */
-  apparent: ApparentDirection
-  /** 1月時点の見かけ方向 */
-  apparentJan: ApparentDirection
-  /** 7月時点の見かけ方向 */
-  apparentJul: ApparentDirection
-  /** 計算視差角 [arcsec] */
-  parallaxArcsec: number
-  /** 1au / d [pc] = 視差角 [arcsec] */
-  parallaxAngleFromDist: number
+/** 見かけ方向のずれ [arcsec] (恒星方向に垂直な天球面上の 2 成分) */
+export interface ApparentOffset {
+  /** 黄経方向 (Δλ cos β) [arcsec] */
+  dLon: number
+  /** 黄緯方向 (Δβ) [arcsec] */
+  dLat: number
 }
 
 // ─── クイズ ──────────────────────────────────────────────────────────────────
 
-export type QuizType = 'dist-from-parallax' | 'which-is-closer' | 'parsec-def'
-
 export interface QuizQuestion {
-  type: QuizType
-  questionKey: string
-  /** ロケールキー（要 tr() 解決）または表示文字列の配列 */
+  id: string
+  question: string
   choices: string[]
-  /** choices の代わりに使う trArr キー（parsec-def など配列ロケールがある場合） */
-  choicesKey?: string
   correctIndex: number
-  explanationKey: string
-  params?: Record<string, number | string>
+  explanation: string
 }

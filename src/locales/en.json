@@ -1,0 +1,535 @@
+{
+  "app": {
+    "title": "Stellar Parallax Simulator",
+    "subtitle": "How does Earth's orbit shift the apparent positions of nearby stars?"
+  },
+  "header": {
+    "help": "Help & shortcuts (?)",
+    "share": "Copy a link to the current setup",
+    "copied": "Link copied",
+    "theme": "Toggle light/dark",
+    "language": "Language"
+  },
+  "help": {
+    "title": "Welcome to the Stellar Parallax Simulator",
+    "intro": "Explore annual parallax — the small yearly shift of nearby stars caused by Earth's orbit — from three viewpoints and with live graphs.",
+    "stepTitles": [
+      "When Earth moves, the sky shifts",
+      "Observe from three viewpoints",
+      "Set up stars and check the graphs",
+      "Missions, measurement and quiz"
+    ],
+    "stepBodies": [
+      "Earth circles the Sun once a year. Because we look from a different place, a nearby star appears to shift slightly against the distant background stars. This is annual parallax.",
+      "Use the tabs at the top of the view to switch between Overhead, From Earth and From Star. The bar below the view plays, pauses and steps through the months.",
+      "In the Stars tab on the left you can change distance and direction (ecliptic latitude/longitude) or add real stars. You can also click the graphs to change the date or the distance.",
+      "The learning panel on the right has explanations, guided missions, a measurement challenge and a quiz. Work through the missions from top to bottom to build understanding step by step."
+    ],
+    "shortcutsTitle": "Keyboard shortcuts",
+    "shortcuts": [
+      "Space|Play / pause",
+      "← →|Back / forward one month",
+      "1 2 3|Switch viewpoint",
+      "C|Half-year comparison",
+      "A|Annual aberration",
+      "T|Show trail",
+      "?|This help"
+    ],
+    "prev": "Back",
+    "next": "Next",
+    "start": "Get started",
+    "close": "Close"
+  },
+  "mobile": {
+    "controls": "⚙ Controls",
+    "graph": "📈 Graphs",
+    "learn": "📘 Learn"
+  },
+  "timeline": {
+    "play": "Play",
+    "pause": "Pause",
+    "prevMonth": "Back one month (←)",
+    "nextMonth": "Forward one month (→)",
+    "date": "{{month}} {{day}}",
+    "angle": "orbit {{deg}}°",
+    "slider": "Orbital position (date)",
+    "speed": "Speed",
+    "speedHint": "1 year = {{sec}} s",
+    "perYear": "1 yr={{sec}}s"
+  },
+  "views": {
+    "overhead": "Overhead",
+    "observer": "From Earth",
+    "stellar": "From Star",
+    "overheadDesc": "3D view of the solar system from outside",
+    "observerDesc": "The sky as seen from Earth",
+    "stellarDesc": "The solar system as seen from the star",
+    "loading": "Loading 3D scene…",
+    "overheadNote": "Drag to rotate, scroll to zoom. Distances and angles are exaggerated.",
+    "stellarNote": "The solar system seen through a telescope on the star. The largest Sun–Earth angle is exactly the star's parallax p."
+  },
+  "legend": {
+    "title": "Legend",
+    "sightLine": "Line of sight from Earth",
+    "sunLine": "Direction from the Sun (reference)",
+    "apparentPath": "Apparent path on the background sky",
+    "parallaxAngle": "Parallax angle p",
+    "halfYear": "Earth and position half a year later",
+    "reference": "+ Direction from the Sun (reference)",
+    "observedPath": "Apparent path over one year",
+    "maxPair": "Max shift 2p = {{v}} ({{m1}} & {{m2}})"
+  },
+  "view": {
+    "sun": "Sun",
+    "earth": "Earth",
+    "nearStar": "Nearby star",
+    "screen": "Background sky (distant stars)",
+    "parallaxP": "p",
+    "apparentPos": "Apparent position",
+    "halfYearSep": "6-month shift {{v}}",
+    "aberInsetTitle": "Shape & timing",
+    "parallaxShort": "Parallax",
+    "aberrationShort": "Aberration",
+    "lookingFromStar": "The solar system seen from {{name}}",
+    "stellarDistance": "Distance {{d}} ({{au}})",
+    "stellarMax": "max = p = {{p}}",
+    "stellarNow": "now {{v}}",
+    "aberInsetSub": "sizes normalized",
+    "compass": "← E   N ↑   W →"
+  },
+  "controls": {
+    "tabStars": "Stars",
+    "tabDisplay": "Display",
+    "starList": "Stars",
+    "addPreset": "Add a real star",
+    "custom": "Custom",
+    "addCustom": "Add a custom star",
+    "remove": "Remove",
+    "editSelected": "Selected star",
+    "name": "Star name",
+    "color": "Color",
+    "distance": "Distance",
+    "distanceUnit": "Distance unit",
+    "distanceSlider": "Distance (log slider)",
+    "halve": "Distance ÷2",
+    "double": "Distance ×2",
+    "unitNames": {
+      "pc": "parsecs",
+      "ly": "light-years",
+      "au": "AU"
+    },
+    "eclLat": "Ecliptic latitude β",
+    "eclLatHint": "Changes the shape of the path: 0° gives a line, 90° a circle.",
+    "latEcliptic": "Ecliptic 0°",
+    "latPole": "Pole 90°",
+    "eclLon": "Ecliptic longitude λ",
+    "eclLonHint": "Changes when in the year the shift is largest.",
+    "overlays": "Overlays",
+    "showTrail": "One-year path",
+    "showTrailHint": "Show the shape traced by the apparent position in a year",
+    "showParallaxLine": "Parallax angle p guide",
+    "showParallaxLineHint": "In Overhead view, show the angle between Sun and Earth as seen from the star",
+    "compareMode": "Half-year comparison",
+    "compareModeHint": "Show the position now and six months later to measure the shift",
+    "showAberration": "Annual aberration",
+    "showAberrationHint": "Compare it with parallax (size and timing)",
+    "camera": "3D camera",
+    "cameraHint": "Viewing angle for the Overhead view",
+    "cameraPresets": {
+      "oblique": "Oblique",
+      "top": "Top",
+      "edge": "Edge-on"
+    }
+  },
+  "graph": {
+    "tabPath": "Apparent path",
+    "tabTime": "Over time",
+    "tabCurve": "Parallax vs distance",
+    "xLon": "Longitude shift [{{unit}}] (east to the left)",
+    "yLat": "Latitude [{{unit}}]",
+    "yTime": "Shift [{{unit}}]",
+    "seriesLon": "Longitude",
+    "seriesLat": "Latitude",
+    "seriesAber": "Aberration (right axis)",
+    "clickToSeek": "Click or drag to change the date",
+    "clickToSetDist": "Click to set the distance",
+    "logScale": "Log",
+    "linearScale": "Linear",
+    "distAxis": "Distance d [pc]",
+    "parAxis": "Parallax p [″]",
+    "limitLabel": "{{name}} limit (~{{d}} pc)",
+    "farHidden": "Switch to Log to see distant stars",
+    "xEastLeft": "″ (east left)"
+  },
+  "info": {
+    "distance": "Distance",
+    "parallax": "Parallax",
+    "dLon": "Δlon",
+    "dLat": "Δlat",
+    "measurableBy": "Measurable with {{name}}",
+    "notMeasurable": "Too small for current technology"
+  },
+  "precision": {
+    "nakedShort": "Naked eye",
+    "groundShort": "Ground telescope",
+    "hipparcosShort": "Hipparcos",
+    "gaiaShort": "Gaia"
+  },
+  "learning": {
+    "tabs": {
+      "explain": "Learn",
+      "missions": "Missions",
+      "challenge": "Measure",
+      "quiz": "Quiz"
+    }
+  },
+  "explain": {
+    "formulaTitle": "Parallax and distance (d [pc] = 1 / p [″])",
+    "shape": {
+      "circle": "Ecliptic latitude β = {{beta}}°: close to the ecliptic pole, so the apparent motion is almost a circle.",
+      "line": "Ecliptic latitude β = {{beta}}°: close to the ecliptic plane, so the star moves back and forth along a line.",
+      "ellipse": "Ecliptic latitude β = {{beta}}°: the star traces an ellipse (minor / major axis = |sin β| = {{ratio}})."
+    },
+    "nowTitle": "What is happening now",
+    "now": "Around {{month}}. The star appears shifted from its direction as seen from the Sun by {{pct}}% of the maximum shift p.",
+    "view": {
+      "overhead": "Overhead: extend the line of sight (yellow) from Earth (blue) through the star; where it hits the background sky traces an ellipse over a year. That is the apparent motion.",
+      "observer": "From Earth: + marks the direction seen from the Sun. Distant background stars stay put; only nearby stars trace ellipses.",
+      "stellar": "From Star: seen from the star, Earth circles the Sun in a tiny ellipse. Its largest angular separation is p."
+    },
+    "tipNear": "A very nearby star: large parallax and a large wobble.",
+    "tipFar": "A distant star: the parallax is tiny and the star barely moves. Precision space telescopes are needed.",
+    "tipCompare": "The largest shift (2p = {{v}}) is between {{m1}} and {{m2}}.",
+    "tipTryCompare": "Turn on the half-year comparison (key C) to measure how far the star shifts in six months.",
+    "tipAddStar": "Add another star to compare the wobble of near and far stars at the same scale.",
+    "conceptsTitle": "How it works"
+  },
+  "concepts": {
+    "what": {
+      "title": "What is annual parallax?",
+      "body": "Earth orbits the Sun at a radius of 1 AU (about 150 million km). Because our viewpoint moves, nearby stars appear to shift slightly against distant stars. The largest angle subtended by the Sun–Earth distance (1 AU) as seen from the star is called the annual parallax p.",
+      "diagram": "Diagram defining annual parallax"
+    },
+    "parsec": {
+      "title": "The parsec (pc)",
+      "body": "One parsec is the distance at which the annual parallax is exactly 1″ (1/3600 of a degree). The name comes from parallax + second. Distance d [pc] and parallax p [″] are simply related by d = 1/p.",
+      "scale": "Sense of scale: if the Sun–Earth distance were 1 cm, 1 pc would be about 2 km away — and even the nearest star would be about 2.7 km away."
+    },
+    "shape": {
+      "title": "The shape of the apparent motion",
+      "body": "The apparent motion has the shape of Earth's orbit as seen from the star. Stars at an ecliptic pole (β = ±90°) trace circles, stars on the ecliptic (β = 0°) move back and forth along a line, and others trace ellipses. The semi-major axis is always p.",
+      "twoP": "The largest shift between two dates six months apart is 2p. Remember to halve it when reading p from a graph!"
+    },
+    "aberration": {
+      "title": "Parallax vs. annual aberration",
+      "body": "Earth moves at about 30 km/s. Just as rain seems to come from ahead when you run, starlight appears tilted toward the direction of motion (annual aberration). In 1729 Bradley discovered it while searching for parallax.",
+      "colParallax": "Parallax",
+      "colAberration": "Aberration",
+      "rows": {
+        "cause": {
+          "label": "Cause",
+          "parallax": "Change in Earth's position",
+          "aberration": "Change in Earth's velocity"
+        },
+        "size": {
+          "label": "Size",
+          "parallax": "p = 1/d (this star {{p}})",
+          "aberration": "About {{k}}″ for every star"
+        },
+        "distance": {
+          "label": "Distance",
+          "parallax": "Larger when closer",
+          "aberration": "Independent"
+        },
+        "phase": {
+          "label": "Timing",
+          "parallax": "Max when Earth is at right angles to the star",
+          "aberration": "3 months (90°) out of step"
+        }
+      }
+    },
+    "precision": {
+      "title": "Precision and measurable distance",
+      "body": "The smaller the parallax an instrument can measure, the farther it can measure distances (max distance ≈ 1 / precision).",
+      "colMethod": "Method",
+      "colLimit": "Precision",
+      "colRange": "Range",
+      "colThis": "This star",
+      "naked": "With the naked eye (resolution about 1′ = 60″) no stellar parallax is visible — telescopes were needed to discover it."
+    },
+    "history": {
+      "title": "A short history",
+      "items": "Antiquity|The absence of visible parallax was used as an argument that Earth does not move\n1543|Copernicus proposes heliocentrism and argues the stars are so far away that their parallax is tiny\n1729|Searching for parallax, Bradley discovers annual aberration\n1838|Bessel makes the first parallax measurement: 61 Cygni, about 0.31″\n1989|The Hipparcos satellite measures parallaxes of about 120,000 stars to about 0.001″\n2013|The Gaia satellite launches and measures parallaxes of over a billion stars"
+    },
+    "model": {
+      "title": "Simplifications in this model",
+      "body": "Earth's orbit is a circle; proper motion, binary motion and atmospheric refraction are ignored. Distances and angles in the 3D view are exaggerated for visibility. Dates assume Earth's heliocentric ecliptic longitude is about 100° on January 1."
+    }
+  },
+  "calc": {
+    "title": "Parallax → distance calculator",
+    "input": "Parallax",
+    "note": "d [pc] = 1 / p [″]   (1 mas = 0.001″)"
+  },
+  "missions": {
+    "title": "Observation missions",
+    "progress": "{{done}} / {{total}} completed",
+    "intro": "Work from top to bottom. Missions are checked off automatically as you explore.",
+    "allDone": "🎉 All missions complete! You are a parallax master.",
+    "done": "Done",
+    "reset": "Reset progress",
+    "items": {
+      "playYear": {
+        "title": "Let Earth complete one orbit (one year)",
+        "hint": "Press ▶ Play below the view and watch for a full year.",
+        "learned": "The apparent position returns to where it started every year."
+      },
+      "observer": {
+        "title": "Watch the star from Earth",
+        "hint": "Choose the From Earth tab above the view (key 2). Compare the background stars with the nearby star.",
+        "learned": "Distant background stars stay put; only nearby stars shift."
+      },
+      "compare": {
+        "title": "Find the largest shift with the half-year comparison",
+        "hint": "Turn on Half-year comparison in the Display tab (key C). Move the date to find when the shift is largest.",
+        "learned": "The largest shift between dates six months apart is 2p; the parallax p is half of it."
+      },
+      "distance": {
+        "title": "Change the distance and watch the parallax",
+        "hint": "Use the distance slider or the Distance ×2 button in the Stars tab.",
+        "learned": "Doubling the distance halves the parallax: p = 1/d."
+      },
+      "multi": {
+        "title": "Add stars to compare near and far",
+        "hint": "Use “Add a real star” in the Stars tab — try Proxima Centauri and Deneb.",
+        "learned": "At the same scale, nearer stars clearly wobble more."
+      },
+      "pole": {
+        "title": "Set ecliptic latitude to 90° (the pole)",
+        "hint": "Choose “Pole 90°” under ecliptic latitude. Watch the shape of the path!",
+        "learned": "A star at the ecliptic pole traces a circle."
+      },
+      "ecliptic": {
+        "title": "Set ecliptic latitude to 0° (on the ecliptic)",
+        "hint": "Press “Ecliptic 0°”. What shape is the path now?",
+        "learned": "A star on the ecliptic moves back and forth along a line."
+      },
+      "graphClick": {
+        "title": "Click the graphs",
+        "hint": "Click the “Over time” graph to change the date, or the “Parallax vs distance” graph to change the distance.",
+        "learned": "The shift is a yearly wave, and p is inversely proportional to distance."
+      },
+      "stellar": {
+        "title": "Look back at the solar system from the star",
+        "hint": "Choose the From Star tab above the view (key 3).",
+        "learned": "The largest Sun–Earth angle seen from a star is that star's parallax p."
+      },
+      "aberration": {
+        "title": "Compare with annual aberration",
+        "hint": "Turn on Annual aberration in the Display tab (key A) and look at From Earth and the Over time graph.",
+        "learned": "Aberration is about 20.5″ regardless of distance, and is three months out of step with parallax."
+      },
+      "challenge": {
+        "title": "Solve a measurement challenge",
+        "hint": "In the Measure tab, find the distance of a mystery star from its path.",
+        "learned": "Read p from the graph and d = 1/p gives the distance."
+      },
+      "quiz": {
+        "title": "Get 4 or more right in the quiz",
+        "hint": "Try the Quiz tab in the learning panel.",
+        "learned": "You've mastered the basics of stellar parallax!"
+      }
+    }
+  },
+  "challenge": {
+    "solved": "Solved: {{n}}",
+    "easy": "Easy",
+    "hard": "Hard",
+    "intro": "This is a mystery star's apparent motion over one year (grid in arcseconds ″). Read the parallax p from the path and work out the distance d.",
+    "plotLabel": "Apparent path of the mystery star",
+    "inputP": "Parallax you read, p [″]",
+    "inputD": "Distance d [pc]",
+    "check": "Check",
+    "hint": "Hint",
+    "hintText": "The parallax p is the distance from the center (where the axes cross) to the farthest point of the path — two points six months apart are 2p apart. Enter p and tap outside the box to fill in d = 1/p automatically.",
+    "correct": "Correct! (within 12%)",
+    "wrong": "Close! Read the scale again.",
+    "solution": "Answer: p ≈ {{p}} → d = 1/p ≈ {{d}} pc (about {{ly}} light-years)",
+    "next": "Next star",
+    "addToSim": "Add to simulator",
+    "added": "Added",
+    "retry": "Try again",
+    "skip": "Try a different star"
+  },
+  "quiz": {
+    "correct": "Correct!",
+    "incorrect": "Not quite…",
+    "next": "Next question",
+    "seeResults": "See results",
+    "scoreResult": "{{score}} / {{total}} correct",
+    "allCorrect": "Perfect score! Excellent!",
+    "goodJob": "Well done!",
+    "tryAgain": "Read the explanations and try again.",
+    "retry": "Try new questions",
+    "questionOf": "Question {{current}} / {{total}}",
+    "best": "Best: {{best}} / {{total}}",
+    "q": {
+      "distFromParallax": {
+        "question": "A star has an annual parallax of {{p}}″. How far away is it in parsecs?",
+        "explanation": "From d = 1/p: d = 1 / {{p}} = {{d}} pc."
+      },
+      "parallaxFromDist": {
+        "question": "A star is {{d}} pc away. What is its annual parallax in arcseconds?",
+        "explanation": "From p = 1/d: p = 1 / {{d}} = {{p}}″."
+      },
+      "whichCloser": {
+        "question": "Star A has a parallax of {{pa}}″ and star B {{pb}}″. Which is closer to Earth?",
+        "starA": "Star A ({{pa}}″)",
+        "starB": "Star B ({{pb}}″)",
+        "same": "Same distance",
+        "nameA": "Star A",
+        "nameB": "Star B",
+        "explanation": "The larger the parallax, the closer the star. {{star}} is closer, at {{d}} pc."
+      },
+      "halfYearShift": {
+        "question": "A star's apparent position differs by at most {{sep}}″ between two dates six months apart. How far away is it?",
+        "explanation": "Six months apart Earth has moved across its orbit (2 AU), so the shift is 2p. p = {{sep}} ÷ 2 = {{p}}″ and d = 1/p = {{d}} pc."
+      },
+      "precisionLimit": {
+        "question": "An instrument can measure parallaxes down to {{lim}}″. Up to roughly what distance can it measure?",
+        "explanation": "The smallest measurable parallax is {{lim}}″, so d = 1 / {{lim}} = {{d}} pc."
+      },
+      "parsecDef": {
+        "question": "Which is the correct definition of one parsec?",
+        "choices": [
+          "The distance at which the annual parallax is 1 arcsecond",
+          "The distance light travels in one year",
+          "The mean Earth–Sun distance",
+          "The distance at which the annual parallax is 1 degree"
+        ],
+        "explanation": "1 pc is the distance at which the parallax is 1″ — about 3.26 light-years (about 206,265 AU)."
+      },
+      "doubleDistance": {
+        "question": "If the distance to a star doubles, what happens to its annual parallax?",
+        "choices": [
+          "It halves",
+          "It doubles",
+          "It becomes 1/4",
+          "It stays the same"
+        ],
+        "explanation": "Since p = 1/d, parallax is inversely proportional to distance. Twice as far means half the parallax."
+      },
+      "lightYear": {
+        "question": "About how many light-years is one parsec?",
+        "choices": [
+          "About 3.26",
+          "About 1",
+          "About 9.46",
+          "About 206,265"
+        ],
+        "explanation": "1 pc ≈ 3.26 light-years ≈ 206,265 AU (206,265 is one radian expressed in arcseconds)."
+      },
+      "poleShape": {
+        "question": "What shape does a star at the ecliptic pole (latitude 90°) trace over a year due to parallax?",
+        "choices": [
+          "A circle",
+          "A straight line (back and forth)",
+          "A figure eight",
+          "It doesn't move"
+        ],
+        "explanation": "Seen from the ecliptic pole, Earth's orbit looks circular, so the apparent motion is a circle. Lower latitudes give flatter ellipses."
+      },
+      "eclipticShape": {
+        "question": "What is the parallax motion of a star on the ecliptic (latitude 0°)?",
+        "choices": [
+          "Back and forth along a line",
+          "A circle",
+          "A tall ellipse",
+          "A spiral"
+        ],
+        "explanation": "Seen edge-on, Earth's orbit looks like a line segment, so the apparent motion is back and forth along a line."
+      },
+      "background": {
+        "question": "Seen from Earth, why do the background stars hardly move?",
+        "choices": [
+          "They are so far away that their parallax is tiny",
+          "They move along with Earth",
+          "They are inside the solar system",
+          "They don't shine on their own"
+        ],
+        "explanation": "Parallax is inversely proportional to distance. Very distant stars have unmeasurably small parallaxes, so they serve as fixed reference points."
+      },
+      "aberration": {
+        "question": "Which statement about annual aberration is correct?",
+        "choices": [
+          "Every star shifts by up to about 20.5″, regardless of distance",
+          "Nearer stars shift more",
+          "More distant stars shift more",
+          "It repeats every day"
+        ],
+        "explanation": "Aberration depends on the ratio of Earth's orbital speed to the speed of light (about 1/10,000), not on the star's distance."
+      },
+      "evidence": {
+        "question": "Observing annual parallax is mainly evidence for what?",
+        "choices": [
+          "Earth orbits the Sun",
+          "Earth rotates on its axis",
+          "The universe is expanding",
+          "Stars produce their own light"
+        ],
+        "explanation": "Parallax arises because Earth's orbital motion changes our viewpoint. Bessel's 1838 measurement was direct evidence of Earth's orbit (as was annual aberration)."
+      },
+      "naked": {
+        "question": "The naked eye can resolve about 1′ (60″). Which stars show annual parallax to the naked eye?",
+        "choices": [
+          "None — the largest is only about 0.77″",
+          "Sirius",
+          "Proxima Centauri",
+          "All first-magnitude stars"
+        ],
+        "explanation": "Even Proxima Centauri's parallax is only about 0.77″, roughly 1/80 of the eye's resolution. That is why parallax was not found until telescopes improved."
+      }
+    }
+  },
+  "presetNote": {
+    "proxima": "The nearest star to the Sun (a red dwarf) — the largest known stellar parallax.",
+    "alphaCen": "The main star of Proxima's triple system; the nearest star visible to the naked eye.",
+    "barnard": "The star with the largest proper motion (about 10″ per year). Note: proper motion is not modeled here.",
+    "sirius": "The brightest star in the night sky (Canis Major).",
+    "cyg61": "In 1838 Bessel made the first-ever parallax measurement on this star.",
+    "altair": "One of the Summer Triangle stars, in Aquila.",
+    "vega": "One of the Summer Triangle stars, in Lyra. Its high ecliptic latitude gives a rounded ellipse.",
+    "aldebaran": "The bright star of Taurus. Lying near the ecliptic (β ≈ −5°), it moves almost along a line.",
+    "polaris": "The North Star. Its parallax (about 0.0075″) is too small for ground telescopes to measure well.",
+    "betelgeuse": "Orion's red supergiant. Its parallax is about 0.006″ and its exact distance is still debated.",
+    "deneb": "One of the Summer Triangle stars. Very distant (about 800 pc), with a parallax of only about 1 mas."
+  },
+  "months": [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ],
+  "monthsShort": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
+  ]
+}
