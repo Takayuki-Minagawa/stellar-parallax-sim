@@ -1,18 +1,97 @@
 import { useEffect, useRef } from 'react'
-import { useSimStore } from '../store/simulationStore'
-import { STAR_PRESETS } from '../data/starPresets'
-import { distanceToParallax } from '../utils/astronomy'
-import type { Language, Theme, ViewMode, Star } from '../types'
+import { useSimStore, nextStarId, starFromPreset } from '../store/simulationStore'
+import { findPreset } from '../data/starPresets'
+import type { Star } from '../types'
 
 /**
- * URLクエリパラメータとシミュレーション状態を双方向同期するフック
+ * URL クエリパラメータとシミュレーション状態を双方向同期するフック
  *
- * セグメントフォーマット:
- *   プリセット (1件目):  presetId:distPc
- *   プリセット (2件目+): presetId~2:distPc  (tilde+連番で重複回避)
- *   カスタム星:          id:distPc:dirRad:colorHex:jaName:enName
- *                        ※ name/nameEn は encodeURIComponent でエンコード
+ * v=2 の stars セグメント (カンマ区切り):
+ *   プリセット: p.<presetId>:<distPc>[:<latDeg>:<lonDeg>]   (位置を変えた場合のみ角度を付与)
+ *   カスタム:   c:<distPc>:<latDeg>:<lonDeg>:<colorHex>:<jaName>:<enName>
+ * 旧形式 (v なし) の presetId:distPc / custom-N:distPc:dirRad:color:ja:en も読み込める
  */
+
+const num = (s: string | undefined, fallback: number) => {
+  const v = s === undefined || s === '' ? NaN : parseFloat(s)
+  return isFinite(v) ? v : fallback
+}
+const clampLat = (v: number) => Math.max(-90, Math.min(90, v))
+const normLon = (v: number) => ((v % 360) + 360) % 360
+const safeDecode = (s: string | undefined) => {
+  if (!s) return ''
+  try { return decodeURIComponent(s) } catch { return s }
+}
+const safeColor = (hex: string | undefined) =>
+  hex && /^[0-9a-fA-F]{6}$/.test(hex) ? `#${hex}` : '#7dffa0'
+
+function parseV2(seg: string): Star | null {
+  const parts = seg.split(':')
+  const distancePc = num(parts[1], NaN)
+  if (!(distancePc > 0)) return null
+
+  if (parts[0].startsWith('p.')) {
+    const star = starFromPreset(parts[0].slice(2))
+    if (!star) return null
+    return {
+      ...star,
+      distancePc,
+      eclLatDeg: clampLat(num(parts[2], star.eclLatDeg)),
+      eclLonDeg: normLon(num(parts[3], star.eclLonDeg)),
+    }
+  }
+  if (parts[0] === 'c') {
+    const name = safeDecode(parts[5]) || 'Custom Star'
+    return {
+      id: nextStarId(),
+      name,
+      nameEn: safeDecode(parts[6]) || name,
+      distancePc,
+      eclLatDeg: clampLat(num(parts[2], 0)),
+      eclLonDeg: normLon(num(parts[3], 0)),
+      color: safeColor(parts[4]),
+    }
+  }
+  return null
+}
+
+function parseLegacy(seg: string): Star | null {
+  const parts = seg.split(':')
+  const distancePc = num(parts[1], NaN)
+  if (!(distancePc > 0)) return null
+  const preset = findPreset(parts[0].replace(/~\d+$/, ''))
+  if (preset) {
+    const star = starFromPreset(preset.id)!
+    return { ...star, distancePc }
+  }
+  const name = safeDecode(parts[4]) || 'Custom Star'
+  return {
+    id: nextStarId(),
+    name,
+    nameEn: safeDecode(parts[5]) || name,
+    distancePc,
+    eclLatDeg: 0,
+    eclLonDeg: normLon((num(parts[2], 1) * 180) / Math.PI),
+    color: safeColor(parts[3]),
+  }
+}
+
+function serialize(s: Star): string {
+  const d = +s.distancePc.toFixed(3)
+  const preset = findPreset(s.presetId)
+  if (preset) {
+    const moved =
+      Math.abs(preset.eclLatDeg - s.eclLatDeg) > 0.05 ||
+      Math.abs(preset.eclLonDeg - s.eclLonDeg) > 0.05
+    return moved
+      ? `p.${preset.id}:${d}:${+s.eclLatDeg.toFixed(1)}:${+s.eclLonDeg.toFixed(1)}`
+      : `p.${preset.id}:${d}`
+  }
+  return [
+    'c', d, +s.eclLatDeg.toFixed(1), +s.eclLonDeg.toFixed(1),
+    s.color.replace('#', ''), encodeURIComponent(s.name), encodeURIComponent(s.nameEn),
+  ].join(':')
+}
 
 export function useUrlSync() {
   const mounted = useRef(false)
@@ -21,11 +100,13 @@ export function useUrlSync() {
   const theme    = useSimStore(s => s.theme)
   const viewMode = useSimStore(s => s.viewMode)
   const stars    = useSimStore(s => s.stars)
-
-  const setLanguage = useSimStore(s => s.setLanguage)
-  const setTheme    = useSimStore(s => s.setTheme)
-  const setViewMode = useSimStore(s => s.setViewMode)
-  const setStars    = useSimStore(s => s.setStars)
+  const selectedStarId = useSimStore(s => s.selectedStarId)
+  const compareMode = useSimStore(s => s.compareMode)
+  const showAberration = useSimStore(s => s.showAberration)
+  const distanceUnit = useSimStore(s => s.distanceUnit)
+  const playing = useSimStore(s => s.playing)
+  // 再生中は URL を書き換えず、停止したときの位置を反映する
+  const angle = useSimStore(s => (s.playing ? -1 : Math.round(s.earthAngleDeg)))
 
   // ── マウント時にURLから復元 ────────────────────────────────────────────────
   useEffect(() => {
@@ -33,117 +114,57 @@ export function useUrlSync() {
     mounted.current = true
 
     const params = new URLSearchParams(window.location.search)
+    const st = useSimStore.getState()
 
     const lang = params.get('lang')
-    if (lang === 'ja' || lang === 'en') setLanguage(lang as Language)
+    if (lang === 'ja' || lang === 'en') st.setLanguage(lang)
 
     const themeParam = params.get('theme')
-    if (themeParam === 'dark' || themeParam === 'light') setTheme(themeParam as Theme)
+    if (themeParam === 'dark' || themeParam === 'light') st.setTheme(themeParam)
 
     const view = params.get('view')
-    if (view === 'overhead' || view === 'observer' || view === 'stellar') setViewMode(view as ViewMode)
+    if (view === 'overhead' || view === 'observer' || view === 'stellar') st.setViewMode(view)
+
+    const unit = params.get('unit')
+    if (unit === 'pc' || unit === 'ly' || unit === 'au') st.setDistanceUnit(unit)
+
+    const a = params.get('a')
+    if (a !== null && isFinite(parseFloat(a))) st.setEarthAngle(parseFloat(a))
+
+    if (params.get('cmp') === '1') st.setCompareMode(true)
+    if (params.get('ab') === '1') st.setShowAberration(true)
 
     const starsParam = params.get('stars')
     if (starsParam) {
-      // パス1: URL 内の custom-N id をすべて走査して最大値を取得。
-      // duplicate preset 用の新 id はこの値より大きい番号から振り始める。
-      const segments = starsParam.split(',')
-      let maxCustomNum = 1000  // store の idCounter 初期値と同じ下限
-      segments.forEach(seg => {
-        const rawId = seg.split(':')[0]
-        if (rawId.startsWith('custom-')) {
-          const n = parseInt(rawId.slice('custom-'.length), 10)
-          if (!isNaN(n) && n > maxCustomNum) maxCustomNum = n
-        }
-      })
-      let urlIdCounter = maxCustomNum  // ++urlIdCounter で使用するため max の値を保持
-
-      // パス2: 実解析
-      const parsed: Star[] = segments.flatMap(seg => {
-        const parts = seg.split(':')
-        if (parts.length < 2) return []
-
-        const rawId   = parts[0]
-        const distStr = parts[1]
-        const distancePc = parseFloat(distStr)
-        if (isNaN(distancePc) || distancePc <= 0) return []
-
-        // ~N サフィックスを除いてプリセットを探す (#9 対応)
-        const basePresetId = rawId.replace(/~\d+$/, '')
-        const preset = STAR_PRESETS.find(p => p.id === basePresetId)
-        if (preset) {
-          // 1件目はプリセット id をそのまま使用、2件目以降はユニークな custom-* id を割り当てる
-          const isDuplicate = rawId !== basePresetId
-          const id = isDuplicate ? `custom-${++urlIdCounter}` : basePresetId
-          return [{ ...preset, id, distancePc, parallaxArcsec: distanceToParallax(distancePc) }]
-        }
-
-        // カスタム星: id:distPc:dirRad:colorHex:jaName:enName
-        const dirStr    = parts[2]
-        const colorHex  = parts[3]
-        const jaEncoded = parts[4]
-        const enEncoded = parts[5]
-
-        const directionRad = dirStr ? parseFloat(dirStr) : 1.0
-        const color = colorHex ? `#${colorHex}` : '#80ff80'
-
-        // #10 対応: URL に名前が含まれていればそれを使う。なければフォールバック文字列
-        const jaName = jaEncoded ? decodeURIComponent(jaEncoded) : 'Custom Star'
-        const enName = enEncoded ? decodeURIComponent(enEncoded) : jaName
-
-        return [{
-          id: rawId,
-          name: jaName,
-          nameEn: enName,
-          distancePc,
-          parallaxArcsec: distanceToParallax(distancePc),
-          directionRad: isNaN(directionRad) ? 1.0 : directionRad,
-          color: /^#[0-9a-fA-F]{6}$/.test(color) ? color : '#80ff80',
-        }]
-      })
-
-      if (parsed.length > 0) setStars(parsed)
+      const parser = params.get('v') === '2' ? parseV2 : parseLegacy
+      const parsed = starsParam.split(',').map(parser).filter((s): s is Star => s !== null)
+      if (parsed.length > 0) {
+        const sel = Math.max(0, Math.min(parsed.length - 1, Math.round(num(params.get('sel') ?? undefined, 0))))
+        st.setStars(parsed, sel)
+      }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // ── 状態変化時にURLを更新 (replaceState で履歴を汚さない) ─────────────────
   useEffect(() => {
-    if (!mounted.current) return
+    if (!mounted.current || playing) return
 
     const params = new URLSearchParams()
+    params.set('v', '2')
     params.set('lang', language)
     params.set('theme', theme)
     params.set('view', viewMode)
-
-    // #9 対応: プリセット id の出現回数を追跡し、2件目以降に ~N サフィックスを付与
-    const presetCount = new Map<string, number>()
-
-    const starsStr = stars.map(s => {
-      // プリセットかどうかを判定 (id 直接一致 or name/nameEn 一致)
-      const preset =
-        STAR_PRESETS.find(p => p.id === s.id) ??
-        STAR_PRESETS.find(p => p.name === s.name && p.nameEn === s.nameEn)
-
-      if (preset) {
-        const n = (presetCount.get(preset.id) ?? 0) + 1
-        presetCount.set(preset.id, n)
-        const serialId = n === 1 ? preset.id : `${preset.id}~${n}`
-        return `${serialId}:${s.distancePc.toFixed(3)}`
-      }
-
-      // 真のカスタム星: id:distPc:dirRad:colorHex:jaName:enName
-      const dirRad   = s.directionRad.toFixed(4)
-      const colorHex = s.color.replace('#', '')
-      const jaName   = encodeURIComponent(s.name)
-      const enName   = encodeURIComponent(s.nameEn)
-      return `${s.id}:${s.distancePc.toFixed(3)}:${dirRad}:${colorHex}:${jaName}:${enName}`
-    }).join(',')
-    params.set('stars', starsStr)
+    if (distanceUnit !== 'pc') params.set('unit', distanceUnit)
+    if (angle >= 0) params.set('a', String(angle))
+    if (compareMode) params.set('cmp', '1')
+    if (showAberration) params.set('ab', '1')
+    params.set('stars', stars.map(serialize).join(','))
+    const sel = stars.findIndex(s => s.id === selectedStarId)
+    if (sel > 0) params.set('sel', String(sel))
 
     const newSearch = `?${params.toString()}`
     if (window.location.search !== newSearch) {
       window.history.replaceState(null, '', newSearch)
     }
-  }, [language, theme, viewMode, stars])
+  }, [language, theme, viewMode, stars, selectedStarId, compareMode, showAberration, distanceUnit, angle, playing])
 }

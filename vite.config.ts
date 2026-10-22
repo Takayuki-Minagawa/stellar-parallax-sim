@@ -11,7 +11,7 @@ export default defineConfig({
       manifest: {
         name: '年周視差シミュレーター',
         short_name: '視差シム',
-        description: '地球の公転と恒星の見かけの動きをインタラクティブに体験できるシミュレーター',
+        description: '地球の公転と恒星の見かけの動き（年周視差）を3つの視点・グラフ・ミッション・クイズで学べるシミュレーター',
         theme_color: '#050a14',
         background_color: '#050a14',
         display: 'standalone',
@@ -34,4 +34,8 @@ export default defineConfig({
     }),
   ],
   base: '/stellar-parallax-sim/',
+  build: {
+    // three.js を含む 3D ビューは遅延読み込みの別チャンク
+    chunkSizeWarningLimit: 1000,
+  },
 })

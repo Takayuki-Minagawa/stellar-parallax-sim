@@ -1,16 +1,46 @@
 import { create } from 'zustand'
-import type { Star, ViewMode, DistanceUnit, Theme, Language } from '../types'
-import { STAR_PRESETS, DEFAULT_STAR_ID } from '../data/starPresets'
-import { distanceToParallax } from '../utils/astronomy'
+import type { Star, ViewMode, DistanceUnit, Theme, Language, CameraPreset, MissionId } from '../types'
+import { STAR_PRESETS, DEFAULT_STAR_ID, DEFAULT_CUSTOM_STAR } from '../data/starPresets'
 
-let idCounter = 1000
+const PROGRESS_KEY = 'sps-progress-v1'
+
+let idCounter = 0
+/** ストア内で一意な恒星 id を発行 */
+export function nextStarId(): string {
+  return `s${++idCounter}`
+}
+
+function loadProgress(): Partial<Record<MissionId, boolean>> {
+  try {
+    const raw = localStorage.getItem(PROGRESS_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+function saveProgress(progress: Partial<Record<MissionId, boolean>>) {
+  try {
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress))
+  } catch {
+    // storage unavailable (private mode etc.)
+  }
+}
+
+/** プリセットから新しい恒星インスタンスを作る */
+export function starFromPreset(presetId: string): Star | undefined {
+  const preset = STAR_PRESETS.find(p => p.id === presetId)
+  if (!preset) return undefined
+  const { id, noteKey: _note, ...rest } = preset
+  return { ...rest, id: nextStarId(), presetId: id }
+}
 
 interface SimState {
   // ─── アニメーション ────────────────────────────────────────────
-  /** 公転角度 [deg] 0 = 1月 */
+  /** 公転角度 [deg] 0 = 1月1日頃 */
   earthAngleDeg: number
   playing: boolean
-  /** 再生速度 1x = 1年/秒 */
+  /** 再生速度 1× = 1 年 / 60 秒 */
   speed: number
 
   // ─── 恒星 ──────────────────────────────────────────────────────
@@ -24,18 +54,24 @@ interface SimState {
   showParallaxLine: boolean
   compareMode: boolean
   showAberration: boolean
+  cameraPreset: CameraPreset
+  /** 同じプリセットを再選択してもカメラを戻せるようにするカウンタ */
+  cameraNonce: number
 
   // ─── UI ────────────────────────────────────────────────────────
   theme: Theme
   language: Language
+  helpOpen: boolean
+  progress: Partial<Record<MissionId, boolean>>
 
   // ─── アクション ────────────────────────────────────────────────
   setEarthAngle: (deg: number) => void
   setPlaying: (v: boolean) => void
   setSpeed: (v: number) => void
 
-  setStars: (stars: Star[]) => void
-  addStar: (star: Omit<Star, 'id'>) => void
+  setStars: (stars: Star[], selectedIndex?: number) => void
+  addPreset: (presetId: string) => void
+  addCustomStar: () => void
   removeStar: (id: string) => void
   updateStar: (id: string, patch: Partial<Omit<Star, 'id'>>) => void
   selectStar: (id: string) => void
@@ -46,19 +82,23 @@ interface SimState {
   setShowParallaxLine: (v: boolean) => void
   setCompareMode: (v: boolean) => void
   setShowAberration: (v: boolean) => void
+  setCameraPreset: (p: CameraPreset) => void
 
   setTheme: (t: Theme) => void
   setLanguage: (l: Language) => void
+  setHelpOpen: (v: boolean) => void
+  markMission: (id: MissionId) => void
+  resetProgress: () => void
 }
 
-const defaultStar = STAR_PRESETS.find(s => s.id === DEFAULT_STAR_ID) ?? STAR_PRESETS[0]
+const defaultStar = starFromPreset(DEFAULT_STAR_ID)!
 
-export const useSimStore = create<SimState>((set) => ({
+export const useSimStore = create<SimState>((set, get) => ({
   earthAngleDeg: 0,
   playing: false,
-  speed: 1,
+  speed: 6,
 
-  stars: [{ ...defaultStar }],
+  stars: [defaultStar],
   selectedStarId: defaultStar.id,
 
   viewMode: 'overhead',
@@ -67,55 +107,51 @@ export const useSimStore = create<SimState>((set) => ({
   showParallaxLine: true,
   compareMode: false,
   showAberration: false,
+  cameraPreset: 'oblique',
+  cameraNonce: 0,
 
   theme: 'dark',
   language: 'ja',
+  helpOpen: false,
+  progress: loadProgress(),
 
   setEarthAngle: (deg) => set({ earthAngleDeg: ((deg % 360) + 360) % 360 }),
   setPlaying: (playing) => set({ playing }),
   setSpeed: (speed) => set({ speed }),
 
-  setStars: (stars) => {
-    // 復元した custom-* id が idCounter を追い越さないようにカウンターを進める
-    stars.forEach(s => {
-      if (s.id.startsWith('custom-')) {
-        const n = parseInt(s.id.slice('custom-'.length), 10)
-        if (!isNaN(n) && n >= idCounter) idCounter = n
-      }
-    })
-    return set(s => ({
+  setStars: (stars, selectedIndex = 0) =>
+    set({
       stars,
-      selectedStarId: stars.find(st => st.id === s.selectedStarId)?.id ?? stars[0]?.id ?? '',
-    }))
+      selectedStarId: (stars[selectedIndex] ?? stars[0])?.id ?? '',
+    }),
+  addPreset: (presetId) => {
+    const star = starFromPreset(presetId)
+    if (!star) return
+    set(s => ({ stars: [...s.stars, star], selectedStarId: star.id }))
   },
-  addStar: (star) => {
-    const id = `custom-${++idCounter}`
-    set(s => ({ stars: [...s.stars, { ...star, id }] }))
+  addCustomStar: () => {
+    const n = get().stars.filter(s => !s.presetId).length + 1
+    const star: Star = {
+      ...DEFAULT_CUSTOM_STAR,
+      id: nextStarId(),
+      name: `${DEFAULT_CUSTOM_STAR.name} ${n}`,
+      nameEn: `${DEFAULT_CUSTOM_STAR.nameEn} ${n}`,
+      eclLonDeg: Math.round(Math.random() * 360),
+    }
+    set(s => ({ stars: [...s.stars, star], selectedStarId: star.id }))
   },
   removeStar: (id) =>
     set(s => {
+      if (s.stars.length <= 1) return s
       const filtered = s.stars.filter(st => st.id !== id)
       return {
         stars: filtered,
-        selectedStarId: s.selectedStarId === id
-          ? (filtered[0]?.id ?? '')
-          : s.selectedStarId,
+        selectedStarId: s.selectedStarId === id ? filtered[0].id : s.selectedStarId,
       }
     }),
   updateStar: (id, patch) =>
     set(s => ({
-      stars: s.stars.map(st =>
-        st.id === id
-          ? {
-              ...st,
-              ...patch,
-              parallaxArcsec:
-                patch.distancePc != null
-                  ? distanceToParallax(patch.distancePc)
-                  : st.parallaxArcsec,
-            }
-          : st
-      ),
+      stars: s.stars.map(st => (st.id === id ? { ...st, ...patch } : st)),
     })),
   selectStar: (id) => set({ selectedStarId: id }),
 
@@ -125,7 +161,24 @@ export const useSimStore = create<SimState>((set) => ({
   setShowParallaxLine: (showParallaxLine) => set({ showParallaxLine }),
   setCompareMode: (compareMode) => set({ compareMode }),
   setShowAberration: (showAberration) => set({ showAberration }),
+  setCameraPreset: (cameraPreset) => set(s => ({ cameraPreset, cameraNonce: s.cameraNonce + 1 })),
 
   setTheme: (theme) => set({ theme }),
   setLanguage: (language) => set({ language }),
+  setHelpOpen: (helpOpen) => set({ helpOpen }),
+  markMission: (id) => {
+    if (get().progress[id]) return
+    const progress = { ...get().progress, [id]: true }
+    saveProgress(progress)
+    set({ progress })
+  },
+  resetProgress: () => {
+    saveProgress({})
+    set({ progress: {} })
+  },
 }))
+
+/** 選択中の恒星 (見つからなければ先頭) */
+export function useSelectedStar(): Star {
+  return useSimStore(s => s.stars.find(st => st.id === s.selectedStarId) ?? s.stars[0])
+}
